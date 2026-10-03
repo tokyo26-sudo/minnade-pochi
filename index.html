@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff5a36">
+<title>みんなでポチッ</title>
+<style>
+:root{
+  --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
+  --brand:#ff5a36;--brand-soft:#fff3ef;--ok:#2e9e65;--ng:#e5484d;--r:14px;
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button,.btn{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:10px;padding:.55em 1em;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:.35em;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+button:hover,.btn:hover{border-color:#c9cedb}
+button.primary,.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+button.primary:hover{filter:brightness(1.05)}
+button.danger{color:var(--ng);border-color:#f3c4c5}
+button.big{font-size:1.1rem;padding:.8em 1.4em}
+button:disabled{opacity:.4;cursor:default}
+input,select,textarea{border:1px solid #cfd4e0;border-radius:10px;padding:.55em .7em;background:#fff;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:transparent}
+textarea{resize:vertical}
+small,.muted{color:var(--sub)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin:0 0 14px;box-shadow:0 1px 2px rgba(20,30,60,.04)}
+.card h3{margin:0 0 12px;font-size:1.02rem;display:flex;align-items:center;gap:.4em}
+.f{display:block;margin:0 0 12px}
+.f>span{display:block;font-size:.78rem;color:var(--sub);margin-bottom:4px;font-weight:700}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:.92rem;cursor:pointer}
+.chk input{width:auto;margin:0;accent-color:var(--brand)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{font-size:.72rem;background:#eef0f6;border-radius:99px;padding:.15em .65em;color:var(--sub);font-weight:600}
+.chip.used{background:#e3f5ea;color:#1f7a4a}
+.btnprev{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.bp{background:var(--c);color:#fff;border-radius:8px;padding:.25em .8em;font-weight:800;font-size:.9rem}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:#1d2433;color:#fff;padding:.7em 1.2em;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;z-index:99;max-width:90vw;text-align:center;font-weight:600}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(15,20,40,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal>div{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:92vh;overflow:auto;padding:22px}
+.modal h2{margin:0 0 14px;font-size:1.2rem}
+.warn{background:#fff4d6;border:1px solid #f5d27a;border-radius:10px;padding:8px 12px;font-size:.85rem}
+.msgpage{max-width:520px;margin:12vh auto;padding:24px;text-align:center}
+.msgpage .mp-icon{font-size:3.4rem}
+.msgpage h2{margin:.3em 0}
+.msgpage p{color:var(--sub)}
+@keyframes pulse{from{opacity:1}to{opacity:.45}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* ---------- トップ ---------- */
+.land{max-width:720px;margin:0 auto;padding:36px 16px 60px}
+.logo{font-size:2.2rem;font-weight:900;letter-spacing:.02em;line-height:1.2}
+.logo span{color:var(--brand)}
+.lead{color:var(--sub);margin:.4em 0 20px}
+.demo-banner{background:#fff4d6;border:1px solid #f5d27a;border-radius:12px;padding:10px 14px;font-size:.88rem;margin-bottom:14px}
+.modes{display:grid;gap:8px}
+.mode{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+.mode input{width:auto;margin-top:5px;accent-color:var(--brand)}
+.mode:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+.qitem{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.qitem .qt{flex:1;min-width:0}
+.qitem .qt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qitem .acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.qitem .acts button{padding:.35em .7em;font-size:.85rem}
+
+/* ---------- 参加者（スマホ） ---------- */
+body.v-part{background:#fff7ee}
+.p-wrap{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
+.p-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem}
+.p-title{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-name{color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48%}
+.p-mode{margin-top:8px;font-size:.76rem;background:#fff;border:1px solid #f0dcc4;border-radius:10px;padding:6px 10px;color:#6b4e2e}
+.p-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0}
+.p-q{font-size:1.35rem;font-weight:800;line-height:1.45;text-align:center;margin-bottom:14px;word-break:break-word;animation:pop .3s ease}
+.p-timer{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.p-timer .bar{flex:1;height:10px;background:#f1e2cf;border-radius:99px;overflow:hidden}
+.p-timer .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb020,#ff5a36);border-radius:99px;transition:width .25s linear}
+.p-timer span{font-weight:900;font-variant-numeric:tabular-nums;min-width:3.4em;text-align:right}
+.p-timer.hurry span{color:var(--ng);animation:pulse .5s infinite alternate}
+.p-timer.nolimit .bar{display:none}
+.p-opts{display:grid;gap:12px}
+.p-opts.n4,.p-opts.n5,.p-opts.n6{grid-template-columns:1fr 1fr}
+.opt{position:relative;border:none;border-radius:18px;background:var(--c);color:#fff;font-size:1.45rem;font-weight:900;min-height:88px;padding:14px 12px;box-shadow:0 6px 0 rgba(0,0,0,.2);transition:transform .08s,box-shadow .08s,opacity .2s;white-space:normal;word-break:break-word;line-height:1.25}
+.p-opts.n2 .opt{min-height:min(25vh,190px);font-size:2rem}
+.p-opts.n3 .opt{min-height:min(16vh,120px);font-size:1.7rem}
+.opt:active{transform:translateY(5px);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.p-opts.has .opt:not(.sel){opacity:.35}
+.opt.sel{outline:5px solid #1d2433;outline-offset:3px}
+.opt.sel::after{content:"✓";position:absolute;top:6px;right:12px;font-size:1.2rem}
+.p-note{text-align:center;margin-top:18px;font-weight:700;color:var(--sub);min-height:1.5em}
+.p-note.done{color:var(--ok)}
+.p-center{text-align:center}
+.p-center .big{font-size:3.6rem;line-height:1.2}
+.p-center h2{margin:.3em 0 .2em;font-size:1.4rem}
+.p-center p{color:var(--sub);margin:.3em 0}
+.p-answer{display:inline-block;margin-top:14px;background:var(--c,#999);color:#fff;font-weight:900;font-size:1.3rem;border-radius:12px;padding:.4em 1em}
+.dots i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--brand);margin:0 4px;animation:pulse .7s infinite alternate}
+.dots i:nth-child(2){animation-delay:.23s}.dots i:nth-child(3){animation-delay:.46s}
+.p-join .card{margin-top:16px}
+.p-join .pin{font-size:1.8rem;letter-spacing:.4em;text-align:center;font-weight:900;font-variant-numeric:tabular-nums}
+.p-err{color:var(--ng);font-weight:700;min-height:1.4em;margin:-4px 0 8px;font-size:.9rem}
+.p-off{position:fixed;top:0;left:0;right:0;background:#e5484d;color:#fff;text-align:center;font-size:.8rem;padding:3px;display:none;z-index:9}
+.p-off.show{display:block}
+
+/* ---------- ステージ（モニタ表示） ---------- */
+body.v-disp{background:#0b1026;overflow:hidden}
+body.v-disp #app{position:fixed;inset:0}
+body.v-disp.idle{cursor:none}
+.stage{container-type:size;position:relative;width:100%;height:100%;color:#fff;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,#22306e 0%,#0b1026 62%)}
+.st{position:absolute;inset:0;display:flex;flex-direction:column;padding:4cqh 4cqw}
+.st-title{font-size:4.4cqh;font-weight:800;opacity:.85;text-align:center}
+.st-q{font-size:min(5.6cqw,9.5cqh);font-weight:900;line-height:1.25;text-align:center;margin:0 0 2.5cqh;word-break:break-word}
+.st-q.small{font-size:min(3.6cqw,6.2cqh);opacity:.9}
+.st-foot{display:flex;justify-content:space-between;align-items:center;font-size:3.4cqh;margin-top:2.4cqh;gap:2cqw}
+.st-foot b{font-size:1.25em;font-variant-numeric:tabular-nums}
+.st-mode{opacity:.65;font-size:.85em}
+.st-join{flex:1;display:flex;align-items:center;justify-content:center;gap:5cqw;min-height:0}
+.st-qr{background:#fff;padding:2cqh;border-radius:2.6cqh;height:min(60cqh,40cqw);aspect-ratio:1;flex:none}
+.st-qr img{width:100%;height:100%;display:block;image-rendering:pixelated}
+.st-lead{font-size:5cqh;font-weight:800;margin-bottom:3cqh;line-height:1.3}
+.st-pinlabel{font-size:3.2cqh;opacity:.7}
+.st-pin{font-size:min(17cqh,12cqw);font-weight:900;letter-spacing:.1em;font-variant-numeric:tabular-nums;color:#ffd54a;line-height:1.05}
+.st-url{font-size:2.5cqh;opacity:.6;margin-top:2.4cqh;word-break:break-all;max-width:46cqw}
+.st-count{font-size:5.4cqh;font-weight:900}
+.st-timer{display:flex;align-items:center;gap:2cqw;margin-bottom:3cqh}
+.st-bar{flex:1;height:2.4cqh;background:rgba(255,255,255,.13);border-radius:99px;overflow:hidden}
+.st-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffd54a,#ff7a45);border-radius:99px;transition:width .25s linear}
+.st-sec{font-size:8cqh;font-weight:900;min-width:13cqw;text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+.st-sec small{font-size:.45em;margin-left:.15em}
+.st-timer.hurry .st-sec{color:#ff6b6b;animation:pulse .5s infinite alternate}
+.st-timer.nolimit .st-bar{visibility:hidden}
+.st-timer.over .st-sec{font-size:6cqh;color:#ffd54a}
+.tiles{flex:1;display:grid;gap:2.4cqh 2cqw;grid-template-columns:repeat(var(--cols),1fr);align-content:center;min-height:0}
+.tile{background:var(--c);border-radius:2.4cqh;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:min(5.4cqw,9cqh);padding:2cqh 1.5cqw;min-height:18cqh;text-align:center;word-break:break-word;line-height:1.2;box-shadow:0 1cqh 0 rgba(0,0,0,.28)}
+.cols{flex:1;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:2.2cqw;min-height:0}
+.col{display:flex;flex-direction:column;min-height:0;min-width:0}
+.col-top{text-align:center;font-weight:900;font-size:min(7.5cqw,11cqh);line-height:1;font-variant-numeric:tabular-nums}
+.col-top small{font-size:.42em;margin-left:.08em}
+.col-pct{font-size:3.2cqh;opacity:.75;text-align:center;margin:.6cqh 0 1cqh;font-variant-numeric:tabular-nums}
+.col-track{flex:1;position:relative;background:rgba(255,255,255,.07);border-radius:1.6cqh 1.6cqh 0 0;min-height:3cqh}
+.col-fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--c);border-radius:1.6cqh 1.6cqh 0 0;transition:height .7s cubic-bezier(.2,.8,.2,1)}
+.col-label{background:var(--c);text-align:center;font-weight:900;font-size:min(3.8cqw,6cqh);padding:1.2cqh .6cqw;border-radius:1.6cqh;margin-top:1.4cqh;word-break:break-word;line-height:1.15}
+.col-track{border-bottom:.5cqh solid rgba(255,255,255,.35)}
+.col.win .col-top{color:#ffd54a}
+.col.win .col-top::before{content:"👑";display:block;font-size:.42em;margin-bottom:.2em}
+.col.win .col-fill{box-shadow:0 0 3cqh rgba(255,213,74,.55)}
+.col-names{font-size:2cqh;opacity:.85;margin-top:1cqh;line-height:1.35;height:8.4cqh;overflow:hidden;text-align:center;word-break:break-all}
+.st-big{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqh;text-align:center}
+.st-big b{font-size:min(15cqh,11cqw);font-weight:900;color:#ffd54a;line-height:1.1;animation:pop .35s ease}
+.st-big span{font-size:4.6cqh;opacity:.85}
+.st-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:8px 16px;border-radius:99px;font-size:14px;transition:opacity .6s;z-index:5}
+
+/* ---------- マスター（操作） ---------- */
+body.v-op{background:#eef0f5}
+.op-head{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 18px}
+.op-brand{font-weight:900;font-size:1.05rem}
+.op-brand span{color:var(--brand)}
+.demo-tag{background:#ffb020;color:#fff;font-size:.7rem;border-radius:6px;padding:.15em .5em;margin-left:.4em;vertical-align:middle}
+.op-room{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center;flex:1}
+.op-kv{display:flex;align-items:baseline;gap:6px}
+.op-kv label{font-size:.72rem;color:var(--sub);font-weight:700}
+.op-kv b{font-size:1.1rem}
+#hPin{letter-spacing:.12em;font-variant-numeric:tabular-nums;color:var(--brand)}
+.mini{padding:.15em .5em!important;font-size:.8rem!important;border-radius:7px!important}
+.op-actions{display:flex;gap:8px;flex-wrap:wrap}
+.op-tabs{display:flex;gap:4px;padding:12px 18px 0;max-width:1400px;margin:0 auto}
+.op-tabs button{border-radius:10px 10px 0 0;border-color:transparent;background:#dfe2ea;color:var(--sub)}
+.op-tabs button.on{background:#fff;color:var(--ink)}
+.op-body{max-width:1400px;margin:0 auto;padding:0 18px 40px}
+.op-run{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:16px;align-items:start}
+.op-run .card:first-child{border-top-left-radius:0}
+.op-edit{display:grid;grid-template-columns:minmax(320px,500px) 1fr;gap:16px;align-items:start}
+.op-edit .card:first-child{border-top-left-radius:0}
+.lbls{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.phase{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:900}
+.phase .dot{width:14px;height:14px;border-radius:50%;background:#9aa2b5;flex:none}
+.phase.open .dot{background:var(--ng);animation:pulse .7s infinite alternate}
+.phase.closed .dot{background:#ffb020}
+.phase.result .dot{background:var(--ok)}
+.op-q{margin:6px 0 0;font-weight:700;word-break:break-word}
+.op-timer{font-size:2.6rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:6px}
+.op-timer.hurry{color:var(--ng)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.toggles button{font-size:.85rem;padding:.4em .8em}
+.toggles button.on{background:#1d2433;color:#fff;border-color:#1d2433}
+.preview{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0b1026;position:relative}
+.ores-q{font-weight:800;margin-bottom:6px}
+.ores-row{display:grid;grid-template-columns:minmax(4em,auto) 1fr auto;gap:10px;align-items:center;margin:7px 0}
+.ores-lab{font-weight:800;padding:.15em .6em;border-radius:7px;color:#fff;background:var(--c);max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.ores-bar{height:14px;background:#eef0f6;border-radius:99px;overflow:hidden}
+.ores-bar i{display:block;height:100%;background:var(--c);transition:width .4s}
+.ores-n{font-weight:900;font-variant-numeric:tabular-nums;min-width:5.2em;text-align:right}
+.ores-names{grid-column:1/-1;font-size:.8rem;color:var(--sub);margin:-4px 0 2px;word-break:break-all}
+.ores-tot{margin-top:8px;font-weight:700}
+.sharebox{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.sharebox img{width:132px;height:132px;image-rendering:pixelated;border:6px solid #fff;outline:1px solid var(--line);border-radius:6px}
+.sharebox .u{font-size:.8rem;word-break:break-all;background:#f4f5f9;border-radius:8px;padding:6px 8px;margin:6px 0}
+@media (max-width:980px){
+  .op-run,.op-edit{grid-template-columns:1fr}
+  .op-run .right{order:-1}
+  .op-run .card:first-child{border-top-left-radius:var(--r)}
+}
+@media (max-width:600px){
+  .op-head{padding:8px 12px;gap:8px}
+  .op-actions button{font-size:.8rem;padding:.45em .7em}
+  .op-body,.op-tabs{padding-left:10px;padding-right:10px}
+  .f2{grid-template-columns:1fr}
+  .sharebox{grid-template-columns:1fr;justify-items:start}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* =========================================================
+   みんなでポチッ — アンケート機能
+   ここに Supabase の情報を入れると本番モード。空なら「おためしモード」。
+   ========================================================= */
+const CONFIG = {
+  SUPABASE_URL: '',       // 例: 'https://abcdefgh.supabase.co'
+  SUPABASE_ANON_KEY: '',  // Supabase の anon public key
+};
+
+const Q = new URLSearchParams(location.search);
+const FORCE_DEMO = Q.has('demo');
+const DEMO = FORCE_DEMO || !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
+const DAY = 24 * 3600 * 1000;
+const QR_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+const SUPA_SRC = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+
+/* ---------- 小道具 ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function uid(n = 12) {
+  const a = new Uint8Array(n); crypto.getRandomValues(a);
+  return Array.from(a, b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
+}
+function toast(msg, ms = 2600) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+function pageUrl(params = {}) {
+  const u = new URL(location.href); u.search = ''; u.hash = '';
+  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+  if (FORCE_DEMO) u.searchParams.set('demo', '1');
+  return u.toString();
+}
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+function mkStore(area) {
+  return {
+    get(k, d = null) { try { const v = area.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { area.setItem(k, JSON.stringify(v)); } catch {} },
+    del(k) { try { area.removeItem(k); } catch {} },
+  };
+}
+const store = mkStore(window.localStorage);
+const sstore = mkStore(window.sessionStorage);
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast('コピーしました'); }
+  catch { window.prompt('コピーしてください', t); }
+}
+function download(name, text, type) {
+  const blob = new Blob([text], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const pad2 = n => String(n).padStart(2, '0');
+function fmtTime(ms) { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function fmtSec(s) { return s >= 60 ? `${Math.floor(s / 60)}:${pad2(s % 60)}` : String(s); }
+function msgPage(icon, title, body, home = true) {
+  return `<div class="msgpage"><div class="mp-icon">${icon}</div><h2>${esc(title)}</h2><p>${esc(body)}</p>${home ? `<p><a class="btn" href="${esc(pageUrl())}">トップへ</a></p>` : ''}</div>`;
+}
+function openModal(html) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div>${html}</div>`;
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) m.remove(); });
+  document.body.appendChild(m); return m;
+}
+
+/* ---------- 時計（サーバーの時刻に合わせる） ---------- */
+const Clock = {
+  offset: 0, best: Infinity,
+  sync(serverNow, t0, t1) {
+    const rtt = t1 - t0; const est = serverNow - (t0 + t1) / 2;
+    if (rtt <= this.best * 1.5) { this.offset = this.best === Infinity ? est : this.offset * 0.5 + est * 0.5; this.best = Math.min(this.best, rtt); }
+  },
+  now() { return Date.now() + this.offset; },
+};
+
+/* ---------- 選択肢・設定 ---------- */
+const BTN_TYPES = {
+  yesno:   { name: 'はい／いいえ', fixed: ['はい', 'いいえ'] },
+  yesnoEn: { name: 'YES／NO', fixed: ['YES', 'NO'] },
+  num:     { name: '1番・2番・3番…', gen: n => Array.from({ length: n }, (_, i) => `${i + 1}番`) },
+  abc:     { name: 'A・B・C…', gen: n => 'ABCDEF'.slice(0, n).split('') },
+  custom:  { name: 'ボタンの文字を自分で決める' },
+};
+function buildOptions(q) {
+  const t = BTN_TYPES[q.type]; if (!t) return [];
+  if (t.fixed) return t.fixed.slice();
+  if (t.gen) return t.gen(Math.min(6, Math.max(2, q.count | 0)));
+  return (q.labels || []).map(s => String(s).trim()).filter(Boolean).slice(0, 6);
+}
+const COLORS = ['#E5484D', '#3E63DD', '#E89A00', '#2E9E65', '#8E4EC6', '#0F9AA3'];
+const colorOf = i => COLORS[i % COLORS.length];
+const DURATIONS = [[10, '10秒'], [15, '15秒'], [20, '20秒'], [30, '30秒'], [45, '45秒'], [60, '60秒'], [90, '90秒'], [120, '2分'], [180, '3分'], [0, '制限なし']];
+const MODES = {
+  full:   { icon: '🔒', name: '完全匿名', desc: 'だれが何を選んだか、マスターにも見えません' },
+  master: { icon: '👤', name: '匿名',     desc: '名前はマスターだけが見られます（モニタには出ません）' },
+  named:  { icon: '📢', name: '記名',     desc: '選んだ人の名前がモニタに表示されます' },
+};
+const modeOf = m => MODES[m] || MODES.full;
+const ERR = {
+  bad_password: 'マスターパスワードがちがいます', no_password_set: 'サーバーにマスターパスワードが設定されていません（README参照）',
+  bad_pin: 'カギの数字がちがいます', bad_name: '名前は1〜20文字で入れてください', no_room: '部屋が見つかりません（終了したか、24時間たって消えました）',
+  closed: 'もう締め切られています', not_joined: '参加が切れました。もう一度入ってください', room_full: '満員です',
+  network: '通信できませんでした。電波を確認してください', server: 'サーバーでエラーが起きました',
+};
+const errMsg = e => ERR[e] || ('エラー：' + e);
+
+/* ---------- QRコード ---------- */
+let qrReady = false;
+const qrCache = new Map();
+function qrDataUrl(text) {
+  if (!window.QRCode) return null;
+  if (qrCache.has(text)) return qrCache.get(text);
+  try {
+    const d = document.createElement('div');
+    new QRCode(d, { text, width: 480, height: 480, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    const c = d.querySelector('canvas'); const url = c ? c.toDataURL('image/png') : (d.querySelector('img') || {}).src;
+    qrCache.set(text, url); return url;
+  } catch { return null; }
+}
+
+/* =========================================================
+   サーバーとのやりとり
+   おためし版（このブラウザの中だけ）と Supabase 版で同じ形にしてある
+   ========================================================= */
+function makeLocalServer() {
+  const KEY = 'evapp_demo_db_v1';
+  const load = () => { const db = store.get(KEY, { rooms: {} }); const now = Date.now(); for (const c in db.rooms) if (now - db.rooms[c].created_at > DAY) delete db.rooms[c]; return db; };
+  const save = db => store.set(KEY, db);
+  const room = (db, code) => db.rooms[String(code || '').toUpperCase()];
+  const auth = (db, code, secret) => { const r = room(db, code); return r && r.secret === secret ? r : null; };
+  const ok = o => ({ ok: true, server_now: Date.now(), ...o });
+  const ng = e => ({ ok: false, error: e, server_now: Date.now() });
+  const newPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+  function tally(r, runId, withNames) {
+    const run = r.runs[runId]; if (!run) return null;
+    const n = run.options.length, counts = Array(n).fill(0), names = withNames ? Array.from({ length: n }, () => []) : null;
+    const entries = Object.entries(r.votes[runId] || {}).sort((a, b) => a[1].t - b[1].t);
+    for (const [k, v] of entries) { counts[v.c]++; if (names) { const p = r.participants[k]; if (p) names[v.c].push(p.name); } }
+    return { counts, total: entries.length, names };
+  }
+  const bc = 'BroadcastChannel' in window ? new BroadcastChannel('evapp-demo') : null;
+  const subs = new Map();
+  if (bc) bc.onmessage = e => { const s = subs.get(e.data && e.data.code); if (s) s.forEach(f => f()); };
+  return {
+    demo: true,
+    async createRoom({ title, anon }) {
+      const db = load(); let code; do { code = uid(6).toUpperCase(); } while (db.rooms[code]);
+      const r = { code, pin: newPin(), secret: uid(24), title: (title || '').slice(0, 60), anon_mode: anon, state: { phase: 'waiting', rev: 1 }, created_at: Date.now(), participants: {}, runs: {}, votes: {} };
+      db.rooms[code] = r; save(db); return ok({ code, pin: r.pin, secret: r.secret });
+    },
+    async opState(code, secret) {
+      const r = auth(load(), code, secret); if (!r) return ng('no_room');
+      return ok({ room: { code: r.code, pin: r.pin, title: r.title, anon_mode: r.anon_mode, state: r.state, created_at: r.created_at }, participants: Object.keys(r.participants).length });
+    },
+    async setState(code, secret, state, duration, run) {
+      const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
+      const st = { ...state };
+      if (run && !r.runs[run.id]) r.runs[run.id] = { question: run.question, options: run.options, started_at: Date.now() };
+      if (duration > 0) st.ends_at = Date.now() + duration * 1000;
+      st.rev = (r.state.rev || 0) + 1; r.state = st; save(db); return ok({ state: st });
+    },
+    async regenPin(code, secret) {
+      const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
+      let p; do { p = newPin(); } while (p === r.pin); r.pin = p; save(db); return ok({ pin: p });
+    },
+    async publicState(code) {
+      const r = room(load(), code); if (!r) return ng('no_room');
+      return ok({ title: r.title, anon_mode: r.anon_mode, state: r.state });
+    },
+    async join(code, pin, device, name) {
+      name = String(name || '').trim(); if (!name || name.length > 20) return ng('bad_name');
+      const db = load(); const r = room(db, code); if (!r) return ng('no_room');
+      if (r.pin !== pin) return ng('bad_pin');
+      r.participants[device] = { name }; save(db); return ok({});
+    },
+    async vote(code, device, voterKey, runId, choice) {
+      const db = load(); const r = room(db, code); if (!r) return ng('no_room');
+      if (!r.participants[device]) return ng('not_joined');
+      const st = r.state;
+      if (st.phase !== 'open' || !st.run || st.run.id !== runId) return ng('closed');
+      if (st.ends_at && Date.now() > st.ends_at + 1500) return ng('closed');
+      if (!(choice >= 0 && choice < st.run.options.length)) return ng('bad_choice');
+      const key = r.anon_mode === 'full' ? voterKey : device;
+      (r.votes[runId] ||= {})[key] = { c: choice, t: Date.now() }; save(db); return ok({});
+    },
+    async results(code, secret, runId) {
+      const r = auth(load(), code, secret); if (!r) return ng('no_room');
+      const t = tally(r, runId, r.anon_mode !== 'full'); if (!t) return ng('no_run');
+      return ok({ ...t, participants: Object.keys(r.participants).length });
+    },
+    async exportAll(code, secret) {
+      const r = auth(load(), code, secret); if (!r) return ng('no_room');
+      const runs = Object.entries(r.runs).sort((a, b) => a[1].started_at - b[1].started_at)
+        .map(([id, x]) => ({ run_id: id, question: x.question, options: x.options, started_at: x.started_at, ...tally(r, id, r.anon_mode !== 'full') }));
+      return ok({ title: r.title, anon_mode: r.anon_mode, runs });
+    },
+    async closeRoom(code, secret) { const db = load(); if (auth(db, code, secret)) delete db.rooms[code.toUpperCase()]; save(db); return ok({}); },
+    subscribe(code, cb) { if (!subs.has(code)) subs.set(code, new Set()); subs.get(code).add(cb); setTimeout(cb, 0); },
+    ping(code) { if (bc) bc.postMessage({ code }); },
+  };
+}
+
+async function makeSupaServer() {
+  await loadScript(SUPA_SRC);
+  const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  async function rpc(fn, args) {
+    const t0 = Date.now();
+    try {
+      const { data, error } = await sb.rpc(fn, args); const t1 = Date.now();
+      if (error) return { ok: false, error: 'server', detail: error.message };
+      if (data && data.server_now) Clock.sync(Number(data.server_now), t0, t1);
+      return data || { ok: false, error: 'server' };
+    } catch (e) { return { ok: false, error: 'network', detail: String(e) }; }
+  }
+  const chans = new Map();
+  return {
+    demo: false,
+    createRoom: ({ password, title, anon }) => rpc('ev_create_room', { p_password: password, p_title: title, p_anon: anon }),
+    opState: (c, s) => rpc('ev_op_state', { p_code: c, p_secret: s }),
+    setState: (c, s, state, dur, run) => rpc('ev_set_state', { p_code: c, p_secret: s, p_state: state, p_duration: dur || 0, p_run: run || null }),
+    regenPin: (c, s) => rpc('ev_regen_pin', { p_code: c, p_secret: s }),
+    publicState: c => rpc('ev_public_state', { p_code: c }),
+    join: (c, pin, d, name) => rpc('ev_join', { p_code: c, p_pin: pin, p_device: d, p_name: name }),
+    vote: (c, d, vk, run, ch) => rpc('ev_vote', { p_code: c, p_device: d, p_voter_key: vk, p_run_id: run, p_choice: ch }),
+    results: (c, s, run) => rpc('ev_results', { p_code: c, p_secret: s, p_run_id: run }),
+    exportAll: (c, s) => rpc('ev_export', { p_code: c, p_secret: s }),
+    closeRoom: (c, s) => rpc('ev_close_room', { p_code: c, p_secret: s }),
+    // リアルタイム通信は「変わったよ」の合図だけ。中身はかならずサーバーに取りに行く（いたずら合図対策）
+    subscribe(code, cb) {
+      const ch = sb.channel('evapp-' + code, { config: { broadcast: { self: false } } });
+      ch.on('broadcast', { event: 'ping' }, () => cb()).subscribe(st => { if (st === 'SUBSCRIBED') cb(); });
+      chans.set(code, ch);
+    },
+    ping(code) { const ch = chans.get(code); if (ch) Promise.resolve(ch.send({ type: 'broadcast', event: 'ping', payload: {} })).catch(() => {}); },
+  };
+}
+
+let API;
+
+/* ---------- 自分の部屋リスト ---------- */
+const ROOMS_KEY = DEMO ? 'evapp_myrooms_demo' : 'evapp_myrooms';
+const myRooms = () => store.get(ROOMS_KEY, []).filter(r => Date.now() - r.created < DAY);
+function saveMyRoom(r) { const list = myRooms().filter(x => x.code !== r.code); list.unshift(r); store.set(ROOMS_KEY, list.slice(0, 20)); }
+function dropMyRoom(code) { store.set(ROOMS_KEY, myRooms().filter(x => x.code !== code)); }
+
+/* =========================================================
+   トップページ
+   ========================================================= */
+function landingView() {
+  document.body.className = 'v-land';
+  const rooms = myRooms();
+  $('#app').innerHTML = `<div class="land">
+    <div class="logo">みんなで<span>ポチッ</span></div>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート</p>
+    ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
+    <div class="card">
+      <h3>📣 マスター：部屋をつくる</h3>
+      <label class="f"><span>部屋の名前（モニタに出ます）</span><input id="lTitle" maxlength="40" placeholder="例：秋の交流会"></label>
+      <div class="f"><span>名前のあつかい（部屋をつくったあとは変えられません）</span>
+        <div class="modes">${Object.entries(MODES).map(([k, m]) => `<label class="mode"><input type="radio" name="lMode" value="${k}" ${k === 'master' ? 'checked' : ''}><div><b>${m.icon} ${m.name}</b><br><small>${m.desc}</small></div></label>`).join('')}</div>
+      </div>
+      ${DEMO ? '' : `<label class="f"><span>マスターパスワード</span><input id="lPw" type="password" autocomplete="current-password"></label>`}
+      <button class="primary big" id="lCreate">部屋をつくる</button>
+    </div>
+    ${rooms.length ? `<div class="card"><h3>🗂 このブラウザでつくった部屋 <small>（24時間で消えます）</small></h3>
+      ${rooms.map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">コード ${esc(r.code)}</span><span class="chip">${fmtTime(r.created)} 作成</span><span class="chip">${modeOf(r.anon).icon} ${modeOf(r.anon).name}</span></div></div><a class="btn" href="${esc(pageUrl({ op: r.code }))}">ひらく</a></div>`).join('')}
+    </div>` : ''}
+    <div class="card"><h3>🙋 参加する</h3>
+      <div class="row"><input id="lCode" placeholder="部屋コード（6文字）" maxlength="6" autocapitalize="characters" style="flex:1;text-transform:uppercase"><button id="lJoin">参加</button></div>
+      <p class="muted" style="margin:.6em 0 0;font-size:.85rem">ふつうは会場のQRコードから入れます</p>
+    </div>
+  </div>`;
+  $('#lJoin').onclick = () => { const c = $('#lCode').value.trim().toUpperCase(); if (c) location.href = pageUrl({ r: c }); };
+  $('#lCode').onkeydown = e => { if (e.key === 'Enter') $('#lJoin').click(); };
+  $('#lCreate').onclick = async () => {
+    const btn = $('#lCreate'); btn.disabled = true;
+    const title = $('#lTitle').value.trim();
+    const anon = ($('input[name=lMode]:checked') || {}).value || 'master';
+    const res = await API.createRoom({ password: DEMO ? '' : $('#lPw').value, title, anon });
+    btn.disabled = false;
+    if (!res.ok) return toast(errMsg(res.error));
+    saveMyRoom({ code: res.code, secret: res.secret, title, anon, created: Date.now() });
+    location.href = pageUrl({ op: res.code });
+  };
+}
+
+/* =========================================================
+   部屋の様子を見張る係（マスター画面とモニタ画面で共通）
+   ========================================================= */
+function makeWatcher(code, secret, onUpdate) {
+  const w = { room: null, participants: 0, results: null, resultsRun: null, gone: false, err: null };
+  let busyOp = false, busyRes = false, stopped = false;
+  async function fetchOp() {
+    if (busyOp) return; busyOp = true;
+    const res = await API.opState(code, secret); busyOp = false;
+    if (res.ok) {
+      const prevRev = w.room && w.room.state && w.room.state.rev;
+      w.room = res.room; w.participants = Number(res.participants) || 0; w.err = null;
+      if (res.room.state && res.room.state.run && res.room.state.rev !== prevRev) fetchRes();
+    } else if (res.error === 'no_room') w.gone = true;
+    else w.err = res.error;
+    onUpdate(w);
+  }
+  async function fetchRes() {
+    const st = w.room && w.room.state; if (!st || !st.run || busyRes) return;
+    busyRes = true; const runId = st.run.id;
+    const res = await API.results(code, secret, runId); busyRes = false;
+    if (res.ok) { w.results = res; w.resultsRun = runId; w.participants = Number(res.participants) || w.participants; onUpdate(w); }
+  }
+  API.subscribe(code, fetchOp);
+  (async () => {
+    let i = 0;
+    while (!stopped) {
+      await sleep(1000); i++;
+      const st = w.room && w.room.state;
+      if (st && st.phase === 'open') fetchRes();
+      if (i % 3 === 0 || !w.room) fetchOp();
+    }
+  })();
+  w.refresh = fetchOp; w.refreshResults = fetchRes; w.stop = () => { stopped = true; };
+  fetchOp();
+  return w;
+}
+
+/* =========================================================
+   ステージ（モニタに映す画面）— 表示用ウィンドウとマスターのプレビューで共通
+   ========================================================= */
+function makeStage(el, getW, joinUrl) {
+  el.classList.add('stage');
+  let key = '';
+  function screenOf(st) {
+    if (!st || st.phase === 'waiting' || !st.run) return 'waiting';
+    if (st.phase === 'open') return st.ends_at && Clock.now() >= st.ends_at ? 'closing' : 'open';
+    return st.phase === 'result' ? 'result' : 'closed';
+  }
+  function foot(room, run) {
+    return `<div class="st-foot"><span>${run && run.showCount ? `回答 <b data-tot>0</b> / <b data-pc>0</b>人` : ''}</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}</span></div>`;
+  }
+  function cols(run, withNames) {
+    return `<div class="cols" style="--n:${run.options.length}">${run.options.map((o, i) => `
+      <div class="col" data-i="${i}" style="--c:${colorOf(i)}">
+        <div class="col-top"><span data-cnt>0</span><small>人</small></div>
+        <div class="col-pct" data-pct>0%</div>
+        <div class="col-track"><div class="col-fill" data-fill></div></div>
+        <div class="col-label">${esc(o)}</div>
+        ${withNames ? '<div class="col-names" data-names></div>' : ''}
+      </div>`).join('')}</div>`;
+  }
+  function tiles(run) {
+    const n = run.options.length, c = n <= 3 ? n : n === 4 ? 2 : 3;
+    return `<div class="tiles" style="--cols:${c}">${run.options.map((o, i) => `<div class="tile" style="--c:${colorOf(i)}">${esc(o)}</div>`).join('')}</div>`;
+  }
+  function timer() { return `<div class="st-timer" data-timer><div class="st-bar"><i data-bar></i></div><div class="st-sec" data-sec></div></div>`; }
+  function build(screen, room, st) {
+    const run = st && st.run;
+    if (screen === 'waiting') {
+      const qr = qrDataUrl(joinUrl);
+      return `<div class="st"><div class="st-title">${esc(room.title || 'アンケート')}</div>
+        <div class="st-join">
+          ${qr ? `<div class="st-qr"><img src="${qr}" alt="参加用QRコード"></div>` : ''}
+          <div><div class="st-lead">スマホで${qr ? 'QRコードを読みこんで' : '下のURLを開いて'}<br>参加してね！</div>
+            <div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div>
+            <div class="st-url">${esc(joinUrl)}</div></div>
+        </div>
+        <div class="st-foot"><span class="st-count">🙋 <b data-pc>0</b>人 参加中</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}：${modeOf(room.anon_mode).desc}</span></div></div>`;
+    }
+    const q = `<div class="st-q" data-fit>${esc(run.question)}</div>`;
+    const live = run.reveal === 'live';
+    if (screen === 'open' || (screen === 'closing' && live)) return `<div class="st">${q}${timer()}${live ? cols(run, false) : tiles(run)}${foot(room, run)}</div>`;
+    if (screen === 'closing' || screen === 'closed') return `<div class="st">${q}<div class="st-big"><b>締め切り！</b><span>${screen === 'closed' ? '結果発表をお待ちください…' : '集計中…'}</span></div>${foot(room, run)}</div>`;
+    return `<div class="st"><div class="st-q small" data-fit>${esc(run.question)}</div>${cols(run, room.anon_mode === 'named')}${foot(room, run)}</div>`;
+  }
+  function fit() {
+    $$('[data-fit]', el).forEach(q => {
+      q.style.fontSize = '';
+      const maxH = el.clientHeight * (q.classList.contains('small') ? 0.16 : 0.3);
+      let fs = parseFloat(getComputedStyle(q).fontSize), guard = 0;
+      while (q.scrollHeight > maxH && fs > 10 && guard++ < 30) { fs *= 0.92; q.style.fontSize = fs + 'px'; }
+    });
+  }
+  function fill(w, screen) {
+    $$('[data-pc]', el).forEach(e => e.textContent = w.participants);
+    const st = w.room.state, run = st && st.run;
+    const res = run && w.resultsRun === run.id ? w.results : null;
+    if (run && res) {
+      $$('[data-tot]', el).forEach(e => e.textContent = res.total);
+      const counts = res.counts || [], tot = Math.max(1, res.total), top = Math.max(0, ...counts), max = Math.max(1, top);
+      $$('.col', el).forEach(c => {
+        const i = +c.dataset.i, v = counts[i] || 0;
+        $('[data-cnt]', c).textContent = v;
+        $('[data-pct]', c).textContent = Math.round(v * 100 / tot) + '%';
+        $('[data-fill]', c).style.height = (v / max * 100) + '%';
+        c.classList.toggle('win', screen === 'result' && v === top && v > 0);
+        const nm = $('[data-names]', c);
+        if (nm && res.names) { const l = res.names[i] || []; nm.textContent = l.slice(0, 40).join('、') + (l.length > 40 ? ` ほか${l.length - 40}人` : ''); }
+      });
+    }
+    const t = $('[data-timer]', el);
+    if (t && run) {
+      const bar = $('[data-bar]', t), sec = $('[data-sec]', t);
+      if (st.ends_at) {
+        const rem = Math.max(0, st.ends_at - Clock.now()), total = Math.max(1, (run.duration || 1) * 1000);
+        bar.style.width = Math.min(100, rem / total * 100) + '%';
+        const s = Math.ceil(rem / 1000);
+        t.classList.toggle('hurry', rem > 0 && rem <= 5000); t.classList.toggle('over', rem <= 0);
+        sec.innerHTML = rem <= 0 ? '締め切り！' : `${fmtSec(s)}${s < 60 ? '<small>秒</small>' : ''}`;
+      } else { t.classList.add('nolimit'); sec.innerHTML = '<small>回答受付中</small>'; }
+    }
+  }
+  function update() {
+    const w = getW();
+    if (!w || !w.room) {
+      const k = w && w.gone ? 'gone' : 'load';
+      if (key !== k) { key = k; el.innerHTML = `<div class="st"><div class="st-big"><span>${k === 'gone' ? 'この部屋は終了しました' : '接続中…'}</span></div></div>`; }
+      return;
+    }
+    const st = w.room.state || { phase: 'waiting' }, run = st.run, screen = screenOf(st);
+    const k = [screen, run && run.id, run && run.reveal, run && run.showCount, w.room.pin, w.room.title, qrReady, el.clientWidth > 0].join('|');
+    if (k !== key) {
+      key = k; el.innerHTML = build(screen, w.room, st); fit();
+      requestAnimationFrame(() => fill(w, screen));
+    } else fill(w, screen);
+  }
+  window.addEventListener('resize', () => { key = ''; update(); });
+  return { update, reset() { key = ''; } };
+}
+
+/* =========================================================
+   モニタ表示用ウィンドウ
+   ========================================================= */
+function displayView(code) {
+  document.body.className = 'v-disp';
+  const secret = new URLSearchParams(location.hash.slice(1)).get('k') || ((myRooms().find(r => r.code === code) || {}).secret);
+  if (!secret) { document.body.className = ''; $('#app').innerHTML = msgPage('🖥', '表示用のカギがありません', 'マスター画面の「表示用ウィンドウを開く」か「表示用URL」から開いてください。'); return; }
+  document.title = 'モニタ表示 - みんなでポチッ';
+  const el = document.createElement('div'); $('#app').appendChild(el);
+  let w = null;
+  const stage = makeStage(el, () => w, pageUrl({ r: code }));
+  w = makeWatcher(code, secret, () => stage.update());
+  setInterval(() => stage.update(), 250);
+  document.addEventListener('qrready', () => { stage.reset(); stage.update(); });
+  // 全画面とカーソル
+  const hint = document.createElement('div'); hint.className = 'st-hint'; hint.textContent = 'ダブルクリック（または F キー）で全画面'; document.body.appendChild(hint);
+  setTimeout(() => hint.style.opacity = 0, 4000);
+  const fs = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); };
+  document.addEventListener('dblclick', fs);
+  document.addEventListener('keydown', e => { if (e.key === 'f' || e.key === 'F') fs(); });
+  let idleT; document.addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2500); });
+}
+
+/* =========================================================
+   参加者（スマホ）
+   ========================================================= */
+function participantView(code) {
+  document.body.className = 'v-part';
+  const app = $('#app');
+  const S = DEMO ? sstore : store; // おためし版はタブごとに別の人になる
+  let device = S.get('evapp_device'); if (!device) { device = 'd-' + uid(16); S.set('evapp_device', device); }
+  const jKey = 'evapp_join_' + code, vtKey = 'evapp_vt_' + code, mvKey = 'evapp_myvotes_' + code;
+  let joined = S.get(jKey);
+  let voteToken = S.get(vtKey); if (!voteToken) { voteToken = 'v-' + uid(16); S.set(vtKey, voteToken); }
+  let myVotes = S.get(mvKey, {});
+  let pub = null, key = '', offline = false, lastRun = null;
+
+  const off = document.createElement('div'); off.className = 'p-off'; off.textContent = '通信できません…再接続中'; document.body.appendChild(off);
+
+  async function refresh() {
+    const res = await API.publicState(code);
+    if (res.ok) { pub = res; offline = false; }
+    else if (res.error === 'no_room') pub = { gone: true };
+    else offline = true;
+    off.classList.toggle('show', offline);
+    render();
+  }
+  function head() {
+    const m = modeOf(pub.anon_mode);
+    return `<div class="p-head"><div class="p-title">${esc(pub.title || 'アンケート')}</div>${joined ? `<div class="p-name">👤 ${esc(joined.name)}</div>` : ''}</div>
+      <div class="p-mode">${m.icon} <b>${m.name}</b>：${m.desc}</div>`;
+  }
+  function render() {
+    if (!pub) { if (key !== 'load') { key = 'load'; app.innerHTML = `<div class="p-wrap"><div class="p-main p-center"><div class="dots"><i></i><i></i><i></i></div></div></div>`; } return; }
+    if (pub.gone) { if (key !== 'gone') { key = 'gone'; app.innerHTML = msgPage('🚪', '部屋が見つかりません', 'アンケートは終了したか、URLがちがうようです。', false); } return; }
+    if (!joined) return renderJoin();
+    const st = pub.state || {}, run = st.run;
+    const expired = st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at;
+    const screen = !run || st.phase === 'waiting' ? 'waiting' : st.phase === 'open' && !expired ? 'open' : 'closed';
+    const my = run ? myVotes[run.id] : undefined;
+    const k = [screen, st.rev, my, st.phase].join('|');
+    if (k === key) return tick();
+    key = k;
+    if (screen === 'open' && run.id !== lastRun) { lastRun = run.id; try { navigator.vibrate && navigator.vibrate(60); } catch {} window.scrollTo(0, 0); }
+    let main;
+    if (screen === 'waiting') {
+      main = `<div class="p-main p-center"><div class="big">🙌</div><h2>参加できました！</h2><p>アンケートが始まるまで、少々お待ちください</p><p style="margin-top:18px"><span class="dots"><i></i><i></i><i></i></span></p></div>`;
+    } else if (screen === 'open') {
+      const n = run.options.length, has = my !== undefined;
+      main = `<div class="p-main">
+        <div class="p-q">${esc(run.question)}</div>
+        <div class="p-timer" id="pTimer"><div class="bar"><i id="pBar"></i></div><span id="pSec"></span></div>
+        <div class="p-opts n${n} ${has ? 'has' : ''}">${run.options.map((o, i) => `<button class="opt ${my === i ? 'sel' : ''}" data-i="${i}" style="--c:${colorOf(i)}">${esc(o)}</button>`).join('')}</div>
+        <div class="p-note ${has ? 'done' : ''}">${has ? '✓ 回答しました。締め切りまで変えられます' : 'ボタンをタップして回答してください'}</div>
+      </div>`;
+    } else {
+      const ans = my !== undefined ? run.options[my] : null;
+      main = `<div class="p-main p-center"><div class="big">${st.phase === 'result' ? '🎉' : '⏰'}</div>
+        <h2>${st.phase === 'result' ? '結果発表中！' : '締め切りました'}</h2>
+        <p>${esc(run.question)}</p>
+        ${ans != null ? `<div class="p-answer" style="--c:${colorOf(my)}">あなたの回答：${esc(ans)}</div>` : `<p style="margin-top:12px"><b>回答しませんでした</b></p>`}
+        <p style="margin-top:20px">${st.phase === 'result' ? '結果はモニタを見てね！' : 'モニタに注目！'}</p></div>`;
+    }
+    app.innerHTML = `<div class="p-wrap">${head()}${main}</div>`;
+    $$('.opt', app).forEach(b => b.onclick = () => choose(+b.dataset.i));
+    tick();
+  }
+  function tick() {
+    const t = $('#pTimer'); if (!t || !pub || !pub.state) return;
+    const st = pub.state, run = st.run;
+    if (st.ends_at) {
+      const rem = Math.max(0, st.ends_at - Clock.now());
+      $('#pBar').style.width = Math.min(100, rem / Math.max(1, run.duration * 1000) * 100) + '%';
+      $('#pSec').textContent = `のこり ${fmtSec(Math.ceil(rem / 1000))}${rem < 60000 ? '秒' : ''}`;
+      t.classList.toggle('hurry', rem <= 5000);
+    } else { t.classList.add('nolimit'); $('#pSec').textContent = '制限時間なし'; }
+  }
+  async function choose(i) {
+    const st = pub.state, run = st.run; if (!run) return;
+    const prev = myVotes[run.id]; if (prev === i) return;
+    myVotes[run.id] = i; saveVotes(); render();
+    const res = await API.vote(code, device, voteToken, run.id, i);
+    if (!res.ok) {
+      if (myVotes[run.id] === i) { if (prev === undefined) delete myVotes[run.id]; else myVotes[run.id] = prev; saveVotes(); }
+      if (res.error === 'not_joined') { joined = null; S.del(jKey); }
+      toast(errMsg(res.error)); key = ''; refresh();
+    }
+  }
+  function saveVotes() { const ks = Object.keys(myVotes); if (ks.length > 40) ks.slice(0, ks.length - 40).forEach(k => delete myVotes[k]); S.set(mvKey, myVotes); }
+  function renderJoin() {
+    if (key === 'join') return; key = 'join';
+    app.innerHTML = `<div class="p-wrap p-join">${head()}
+      <div class="card">
+        <h3>🙋 参加する</h3>
+        <label class="f"><span>名前（ニックネームでOK）</span><input id="jName" maxlength="20" autocomplete="nickname" placeholder="例：たろう"></label>
+        <label class="f"><span>カギの数字（モニタに出ている4ケタ）</span><input id="jPin" class="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000"></label>
+        <div class="p-err" id="jErr"></div>
+        <button class="primary big" id="jGo" style="width:100%">参加する</button>
+      </div></div>`;
+    const last = store.get('evapp_lastname'); if (last) $('#jName').value = last;
+    const go = async () => {
+      const name = $('#jName').value.trim(), pin = $('#jPin').value.replace(/\D/g, '');
+      if (!name) return $('#jErr').textContent = '名前を入れてください';
+      if (pin.length !== 4) return $('#jErr').textContent = 'カギの数字は4ケタです';
+      $('#jGo').disabled = true;
+      const res = await API.join(code, pin, device, name);
+      $('#jGo').disabled = false;
+      if (!res.ok) return $('#jErr').textContent = errMsg(res.error);
+      joined = { name }; S.set(jKey, joined); store.set('evapp_lastname', name);
+      key = ''; refresh();
+    };
+    $('#jGo').onclick = go;
+    $('#jPin').onkeydown = e => { if (e.key === 'Enter') go(); };
+  }
+
+  API.subscribe(code, refresh);
+  setInterval(refresh, DEMO ? 4000 : 10000);
+  setInterval(() => { if (!pub || pub.gone || !joined) return; const st = pub.state || {};
+    if (st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at) render(); else tick(); }, 250);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  window.addEventListener('online', refresh);
+  refresh();
+}
+
+/* =========================================================
+   マスター（操作画面）
+   ========================================================= */
+const BANK_KEY = 'evapp_bank_v1';
+const loadBank = () => store.get(BANK_KEY, []);
+const saveBank = b => store.set(BANK_KEY, b);
+const durName = v => (DURATIONS.find(d => d[0] === v) || [0, v + '秒'])[1];
+function qChips(q) {
+  const ops = buildOptions(q);
+  return `<span class="chip">${ops.length}択：${esc(ops.join('・'))}</span><span class="chip">⏱ ${durName(q.duration)}</span><span class="chip">${q.reveal === 'live' ? '📊 投票中も見せる' : '🎁 あとで発表'}</span>${q.showCount ? '' : '<span class="chip">人数かくす</span>'}`;
+}
+function qFields(p, quick) {
+  return `
+    <label class="f"><span>質問文</span>${quick ? `<input id="${p}Text" maxlength="200" placeholder="（空欄なら「アンケート」）">` : `<textarea id="${p}Text" rows="3" maxlength="200" placeholder="例：今日のイベント、楽しかった？"></textarea>`}</label>
+    <div class="f2">
+      <label class="f"><span>ボタン</span><select id="${p}Type">${Object.entries(BTN_TYPES).filter(([k]) => !quick || k !== 'custom').map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}</select></label>
+      <label class="f" id="${p}CountWrap"><span>ボタンの数</span><select id="${p}Count">${[2, 3, 4, 5, 6].map(n => `<option value="${n}" ${n === (quick ? 3 : 4) ? 'selected' : ''}>${n}択</option>`).join('')}</select></label>
+    </div>
+    ${quick ? '' : `<div class="f" id="${p}LabelsWrap"><span>ボタンの文字（2〜6個。空欄は使いません）</span><div class="lbls">${[0, 1, 2, 3, 4, 5].map(i => `<input data-lbl="${i}" maxlength="24" placeholder="ボタン${i + 1}">`).join('')}</div></div>`}
+    <div class="f2">
+      <label class="f"><span>制限時間</span><select id="${p}Dur">${DURATIONS.map(([v, t]) => `<option value="${v}" ${v === 30 ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+      <label class="f"><span>結果の見せ方</span><select id="${p}Reveal"><option value="after">締め切ってから発表</option><option value="live">投票中も見せる</option></select></label>
+    </div>
+    <label class="chk"><input type="checkbox" id="${p}Show" checked> 回答人数（例：37 / 42人）をモニタに出す</label>
+    <div class="btnprev" id="${p}Prev"></div>`;
+}
+function qForm(p, root) {
+  const g = id => root.querySelector('#' + p + id);
+  const api = {
+    read() {
+      return { text: g('Text').value.trim(), type: g('Type').value, count: +g('Count').value,
+        labels: g('LabelsWrap') ? $$('[data-lbl]', g('LabelsWrap')).map(i => i.value.trim()) : [],
+        duration: +g('Dur').value, reveal: g('Reveal').value, showCount: g('Show').checked };
+    },
+    write(q) {
+      g('Text').value = q.text || ''; g('Type').value = q.type || 'yesno'; g('Count').value = String(q.count || 4);
+      if (g('LabelsWrap')) $$('[data-lbl]', g('LabelsWrap')).forEach((i, k) => i.value = (q.labels || [])[k] || '');
+      g('Dur').value = String(q.duration ?? 30); g('Reveal').value = q.reveal || 'after'; g('Show').checked = q.showCount !== false;
+      api.sync();
+    },
+    sync() {
+      const t = BTN_TYPES[g('Type').value] || {};
+      g('CountWrap').hidden = !t.gen;
+      if (g('LabelsWrap')) g('LabelsWrap').hidden = g('Type').value !== 'custom';
+      const ops = buildOptions(api.read());
+      g('Prev').innerHTML = ops.length ? ops.map((o, i) => `<span class="bp" style="--c:${colorOf(i)}">${esc(o)}</span>`).join('') : '<small>ボタンの文字を2つ以上入れてください</small>';
+    },
+  };
+  root.addEventListener('input', e => { if (e.target.id && e.target.id.startsWith(p) || e.target.dataset.lbl) api.sync(); });
+  root.addEventListener('change', e => { if (e.target.id && e.target.id.startsWith(p)) api.sync(); });
+  api.sync();
+  return api;
+}
+
+function operatorView(code) {
+  document.body.className = 'v-op';
+  const app = $('#app');
+  const hashKey = new URLSearchParams(location.hash.slice(1)).get('k');
+  const mine = myRooms().find(r => r.code === code);
+  const secret = hashKey || (mine && mine.secret);
+  if (!secret) { app.innerHTML = msgPage('🔑', 'この部屋のマスターキーがありません', '部屋をつくったブラウザで開くか、マスター画面の「リモコン用URL」から開いてください。'); return; }
+  document.title = 'マスター - みんなでポチッ';
+  const joinUrl = pageUrl({ r: code });
+  const dispUrl = pageUrl({ disp: code }) + '#k=' + encodeURIComponent(secret);
+  const remoteUrl = pageUrl({ op: code }) + '#k=' + encodeURIComponent(secret);
+  const usedKey = 'evapp_used_' + code;
+  let used = new Set(store.get(usedKey, []));
+
+  app.innerHTML = `
+  <header class="op-head">
+    <div class="op-brand">みんなで<span>ポチッ</span>${DEMO ? '<span class="demo-tag">おためし</span>' : ''}</div>
+    <div class="op-room">
+      <div class="op-kv"><label>部屋</label><b id="hTitle">…</b></div>
+      <div class="op-kv"><label>コード</label><b>${esc(code)}</b></div>
+      <div class="op-kv"><label>カギ</label><b id="hPin">----</b><button class="mini" id="btnPin" title="カギの数字を作り直す">↻ 作り直す</button></div>
+      <div class="op-kv"><label>参加</label><b id="hCount">0</b>人</div>
+      <div class="op-kv"><b id="hMode" style="font-size:.9rem"></b></div>
+    </div>
+    <div class="op-actions">
+      <button class="primary" id="btnDisp">🖥 表示用ウィンドウを開く</button>
+      <button id="btnShare">🔗 URL・QR</button>
+      <button id="btnSave">💾 結果を保存</button>
+      <button class="danger" id="btnEnd">部屋を終了</button>
+    </div>
+  </header>
+  <nav class="op-tabs"><button data-tab="run" class="on">▶ 進行</button><button data-tab="edit">✏️ 質問をつくる</button></nav>
+  <div class="op-body">
+    <section id="tabRun" class="op-run">
+      <div class="left">
+        <div class="card"><h3>⚡ サッと出題</h3><div id="quick">${qFields('qk', true)}</div><button class="primary big" id="qkGo" style="width:100%">この内容で出題する</button></div>
+        <div class="card"><h3>📋 用意した質問 <small id="bankN"></small></h3><div id="bankRun"></div></div>
+        ${DEMO ? `<div class="card"><h3>🧪 おためし用</h3><p class="muted" style="margin-top:0;font-size:.88rem">ダミーの参加者を入れると、出題したときに勝手に投票してくれます。本物の参加者は「URL・QR」から別タブで開いてね。</p>
+          <div class="row"><button id="bot10">ダミーを10人入れる</button><button id="bot30">30人入れる</button><label class="chk" style="margin:0"><input type="checkbox" id="botAuto" checked> 自動で投票させる</label></div></div>` : ''}
+      </div>
+      <div class="right">
+        <div class="card"><div id="status"></div></div>
+        <div class="card"><h3>🖥 モニタのようす</h3><div class="preview"><div id="preview" style="position:absolute;inset:0"></div></div></div>
+        <div class="card"><h3>📊 集計 <small>（マスターだけに見えています）</small></h3><div id="opres"></div></div>
+      </div>
+    </section>
+    <section id="tabEdit" class="op-edit" hidden>
+      <div class="card"><h3 id="edTitle">✏️ 新しい質問</h3><div id="ed">${qFields('ed', false)}</div>
+        <div class="row"><button class="primary" id="edSave">保存する</button><button id="edNew">新しく書く</button></div></div>
+      <div class="card"><h3>📋 保存した質問</h3><div id="bankEdit"></div>
+        <div class="row" style="margin-top:10px"><button id="bankExp">📤 ファイルに書き出す</button><label class="btn">📥 ファイルから読みこむ<input type="file" id="bankImp" accept=".json,application/json" hidden></label></div>
+        <p class="muted" style="font-size:.82rem;margin-bottom:0">質問はこのブラウザに保存されます。別のPCや別の日に使うときは「書き出す」→「読みこむ」。</p></div>
+    </section>
+  </div>`;
+
+  /* --- タブ --- */
+  $$('.op-tabs button').forEach(b => b.onclick = () => {
+    $$('.op-tabs button').forEach(x => x.classList.toggle('on', x === b));
+    $('#tabRun').hidden = b.dataset.tab !== 'run'; $('#tabEdit').hidden = b.dataset.tab !== 'edit';
+    stage.reset(); stage.update();
+  });
+
+  /* --- 見張り係とプレビュー --- */
+  let w = null, statusKey = '', autoClosed = null, botRuns = new Set();
+  const stage = makeStage($('#preview'), () => w, joinUrl);
+  w = makeWatcher(code, secret, onUpdate);
+  document.addEventListener('qrready', () => { stage.reset(); stage.update(); });
+  const cur = () => (w.room && w.room.state) || { phase: 'waiting' };
+
+  function onUpdate() {
+    if (w.gone) { dropMyRoom(code); app.innerHTML = msgPage('🚪', 'この部屋は終了しました', '部屋を終了したか、24時間たって消えました。'); w.stop(); return; }
+    if (!w.room) return;
+    const r = w.room;
+    if (hashKey && !mine) saveMyRoom({ code, secret, title: r.title, anon: r.anon_mode, created: r.created_at });
+    $('#hTitle').textContent = r.title || '（名前なし）';
+    $('#hPin').textContent = r.pin;
+    $('#hCount').textContent = w.participants;
+    $('#hMode').textContent = `${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}`;
+    renderStatus(); renderOpRes(); stage.update();
+    const st = cur();
+    if (DEMO && st.phase === 'open' && st.run && !botRuns.has(st.run.id)) { botRuns.add(st.run.id); runBots(st); }
+  }
+
+  /* --- いまの状態と操作ボタン --- */
+  function renderStatus() {
+    const st = cur(), run = st.run;
+    const expired = st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at;
+    const k = [st.rev, st.phase, expired].join('|');
+    if (k === statusKey) return tickStatus();
+    statusKey = k;
+    const P = { waiting: ['待機中（参加受付中）', ''], open: ['回答受付中', 'open'], closed: ['締め切り（結果はまだ非公開）', 'closed'], result: ['結果発表中', 'result'] }[st.phase] || ['待機中', ''];
+    let h = `<div class="phase ${P[1]}"><span class="dot"></span>${P[0]}</div>`;
+    if (run && st.phase !== 'waiting') h += `<div class="op-q">Q. ${esc(run.question)}</div>`;
+    if (st.phase === 'open') {
+      h += `<div class="op-timer" id="opTimer"></div>
+        <div class="ctl"><button class="primary big" id="cClose">⏹ 締め切る</button><button id="cWait">待機画面にもどす</button></div>
+        <div class="toggles"><button id="tCount" class="${run.showCount ? 'on' : ''}">回答人数：${run.showCount ? 'モニタに表示中' : 'かくし中'}</button><button id="tReveal" class="${run.reveal === 'live' ? 'on' : ''}">結果：${run.reveal === 'live' ? '投票中も見せる' : 'あとで発表'}</button></div>`;
+    } else if (st.phase === 'closed') {
+      h += `<div class="ctl"><button class="primary big" id="cReveal">🎉 結果発表！</button><button id="cWait">待機画面にもどす</button></div>`;
+    } else if (st.phase === 'result') {
+      h += `<div class="ctl"><button class="primary big" id="cWait">待機画面にもどす</button><button id="cAgain">同じ質問をもう一度</button></div>`;
+    } else {
+      h += `<p class="muted" style="margin:.6em 0 0">モニタには参加用のQRコードとカギの数字が出ています。左から質問を選んで出題してね。</p>`;
+    }
+    $('#status').innerHTML = h;
+    const on = (id, f) => { const b = $('#' + id); if (b) b.onclick = f; };
+    on('cClose', closeNow); on('cWait', backToWait); on('cReveal', reveal); on('cAgain', again);
+    on('tCount', () => { const s = cur(); push({ ...s, run: { ...s.run, showCount: !s.run.showCount } }); });
+    on('tReveal', () => { const s = cur(); push({ ...s, run: { ...s.run, reveal: s.run.reveal === 'live' ? 'after' : 'live' } }); });
+    tickStatus();
+  }
+  function tickStatus() {
+    const t = $('#opTimer'); if (!t) return; const st = cur();
+    if (st.ends_at) { const rem = Math.max(0, st.ends_at - Clock.now()); t.textContent = rem > 0 ? `のこり ${fmtSec(Math.ceil(rem / 1000))}${rem < 60000 ? '秒' : ''}` : '締め切り処理中…'; t.classList.toggle('hurry', rem <= 5000); }
+    else t.textContent = '制限時間なし';
+  }
+  /* --- マスター用の集計 --- */
+  function renderOpRes() {
+    const st = cur(), run = st.run, box = $('#opres');
+    if (!run) { box.innerHTML = '<p class="muted" style="margin:0">まだ出題していません</p>'; return; }
+    const res = w.resultsRun === run.id ? w.results : null;
+    const counts = (res && res.counts) || run.options.map(() => 0), tot = (res && res.total) || 0, max = Math.max(1, ...counts);
+    const names = res && res.names;
+    box.innerHTML = `<div class="ores-q">${esc(run.question)}</div>` + run.options.map((o, i) => `
+      <div class="ores-row" style="--c:${colorOf(i)}"><span class="ores-lab">${esc(o)}</span><span class="ores-bar"><i style="width:${counts[i] / max * 100}%"></i></span><span class="ores-n">${counts[i]}人 <small>${tot ? Math.round(counts[i] * 100 / tot) : 0}%</small></span>
+      ${names && names[i] && names[i].length ? `<div class="ores-names">${esc(names[i].join('、'))}</div>` : ''}</div>`).join('') +
+      `<div class="ores-tot">回答 ${tot} / ${w.participants}人</div>` +
+      (w.room.anon_mode === 'full' ? '<small>🔒 完全匿名なので、だれが何を選んだかは記録されていません</small>' : '');
+  }
+
+  /* --- 状態を送る --- */
+  async function push(state, duration = 0, run = null) {
+    const res = await API.setState(code, secret, state, duration, run);
+    if (!res.ok) { toast('送れませんでした：' + errMsg(res.error)); return false; }
+    w.room.state = res.state; API.ping(code); statusKey = ''; onUpdate(); w.refreshResults();
+    return true;
+  }
+  async function ask(q) {
+    const options = buildOptions(q);
+    if (options.length < 2) return toast('ボタンは2つ以上必要です');
+    const st = cur();
+    if (st.phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って次を出しますか？')) return;
+    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options };
+    const ok = await push({ phase: 'open', run: { ...run, duration: q.duration, reveal: q.reveal, showCount: q.showCount, qid: q.id || null } }, q.duration, run);
+    if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
+  }
+  function closeNow() { const st = cur(); if (st.phase !== 'open') return; push({ ...st, phase: st.run.reveal === 'live' ? 'result' : 'closed' }); }
+  function reveal() { const st = cur(); if (st.run) push({ ...st, phase: 'result' }); }
+  function backToWait() { push({ phase: 'waiting' }); }
+  function again() { const r = cur().run; if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount }); }
+
+  setInterval(() => {
+    const st = cur();
+    if (st.phase === 'open' && st.ends_at && Clock.now() > st.ends_at + 400 && autoClosed !== st.run.id) { autoClosed = st.run.id; closeNow(); }
+    if (w.room) { renderStatus(); stage.update(); }
+  }, 250);
+
+  /* --- サッと出題 --- */
+  const quick = qForm('qk', $('#quick'));
+  $('#qkGo').onclick = () => ask(quick.read());
+
+  /* --- 質問バンク --- */
+  function renderBankRun() {
+    const bank = loadBank(); $('#bankN').textContent = bank.length ? `（${bank.length}問）` : '';
+    $('#bankRun').innerHTML = bank.length ? bank.map(q => `<div class="qitem"><div class="qt"><b>${esc(q.text || '（質問文なし）')}</b><div class="chips">${used.has(q.id) ? '<span class="chip used">✓ 出題ずみ</span>' : ''}${qChips(q)}</div></div><div class="acts"><button class="primary" data-ask="${q.id}">出題</button></div></div>`).join('')
+      : '<p class="muted" style="margin:0">まだありません。「✏️ 質問をつくる」タブで用意できます。</p>';
+    $$('[data-ask]', $('#bankRun')).forEach(b => b.onclick = () => { const q = loadBank().find(x => x.id === b.dataset.ask); if (q) ask(q); });
+  }
+  const ed = qForm('ed', $('#ed'));
+  let editing = null;
+  function renderBankEdit() {
+    const bank = loadBank();
+    $('#bankEdit').innerHTML = bank.length ? bank.map((q, i) => `<div class="qitem"><div class="qt"><b>${i + 1}. ${esc(q.text || '（質問文なし）')}</b><div class="chips">${qChips(q)}</div></div><div class="acts">
+      <button data-up="${i}" ${i === 0 ? 'disabled' : ''}>↑</button><button data-dn="${i}" ${i === bank.length - 1 ? 'disabled' : ''}>↓</button><button data-ed="${q.id}">編集</button><button class="danger" data-del="${q.id}">削除</button></div></div>`).join('')
+      : '<p class="muted" style="margin:0">まだありません</p>';
+    const B = $('#bankEdit');
+    $$('[data-ed]', B).forEach(b => b.onclick = () => { const q = loadBank().find(x => x.id === b.dataset.ed); if (!q) return; editing = q.id; ed.write(q); $('#edTitle').textContent = '✏️ 質問を編集中'; $('#edSave').textContent = '上書き保存'; window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    $$('[data-del]', B).forEach(b => b.onclick = () => { if (!confirm('この質問を削除しますか？')) return; saveBank(loadBank().filter(x => x.id !== b.dataset.del)); if (editing === b.dataset.del) resetEd(); renderBanks(); });
+    const mv = (i, d) => { const bk = loadBank(); const j = i + d; if (j < 0 || j >= bk.length) return; [bk[i], bk[j]] = [bk[j], bk[i]]; saveBank(bk); renderBanks(); };
+    $$('[data-up]', B).forEach(b => b.onclick = () => mv(+b.dataset.up, -1));
+    $$('[data-dn]', B).forEach(b => b.onclick = () => mv(+b.dataset.dn, 1));
+  }
+  function renderBanks() { renderBankRun(); renderBankEdit(); }
+  function resetEd() { editing = null; ed.write({ type: 'yesno', count: 4, duration: 30, reveal: 'after', showCount: true }); $('#edTitle').textContent = '✏️ 新しい質問'; $('#edSave').textContent = '保存する'; }
+  $('#edSave').onclick = () => {
+    const q = ed.read();
+    if (!q.text) return toast('質問文を入れてください');
+    if (buildOptions(q).length < 2) return toast('ボタンの文字を2つ以上入れてください');
+    const bank = loadBank();
+    if (editing) { const i = bank.findIndex(x => x.id === editing); if (i >= 0) bank[i] = { ...q, id: editing }; else bank.push({ ...q, id: 'q' + uid(8) }); }
+    else bank.push({ ...q, id: 'q' + uid(8) });
+    saveBank(bank); toast(editing ? '上書き保存しました' : '保存しました'); resetEd(); renderBanks();
+  };
+  $('#edNew').onclick = resetEd;
+  $('#bankExp').onclick = () => {
+    const bank = loadBank(); if (!bank.length) return toast('書き出す質問がありません');
+    const d = new Date();
+    download(`アンケート質問_${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`, JSON.stringify({ app: 'minnade-pochi', kind: 'questions', version: 1, questions: bank }, null, 2), 'application/json');
+  };
+  $('#bankImp').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text()); const list = Array.isArray(data) ? data : data.questions;
+      if (!Array.isArray(list)) throw 0;
+      const clean = list.filter(q => q && typeof q === 'object' && BTN_TYPES[q.type]).map(q => ({
+        id: 'q' + uid(8), text: String(q.text || '').slice(0, 200), type: q.type, count: Math.min(6, Math.max(2, q.count | 0 || 4)),
+        labels: (q.labels || []).slice(0, 6).map(s => String(s).slice(0, 24)), duration: DURATIONS.some(d => d[0] === +q.duration) ? +q.duration : 30,
+        reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false })).filter(q => buildOptions(q).length >= 2);
+      if (!clean.length) throw 0;
+      saveBank(loadBank().concat(clean)); renderBanks(); toast(`${clean.length}問 読みこみました`);
+    } catch { toast('読みこめませんでした（このアプリで書き出したファイルを選んでね）'); }
+  };
+  resetEd(); renderBanks();
+
+  /* --- 上の帯のボタン --- */
+  $('#btnDisp').onclick = () => {
+    const win = window.open(dispUrl, 'evapp_disp_' + code, 'popup=yes,width=1280,height=760');
+    if (!win) toast('ポップアップがブロックされました。「URL・QR」の表示用URLを使ってください', 4000);
+    else toast('開いたウィンドウをモニタ側へ移して、ダブルクリックで全画面に', 4500);
+  };
+  $('#btnPin').onclick = async () => {
+    if (!confirm('カギの数字を作り直しますか？\n（もう入っている人はそのまま。新しく入る人は新しい数字が必要になります）')) return;
+    const res = await API.regenPin(code, secret);
+    if (!res.ok) return toast(errMsg(res.error));
+    toast('新しいカギ：' + res.pin); w.refresh(); API.ping(code);
+  };
+  $('#btnShare').onclick = () => {
+    const q1 = qrDataUrl(joinUrl);
+    const m = openModal(`<h2>🔗 URL・QRコード</h2>
+      <div class="sharebox">${q1 ? `<img src="${q1}" alt="">` : ''}<div><b>🙋 参加用（観客に見せてOK）</b><div class="u">${esc(joinUrl)}</div>
+        <div class="row"><button data-copy="join">コピー</button>${DEMO ? `<a class="btn" href="${esc(joinUrl)}" target="_blank" rel="noopener">新しいタブで参加者として開く</a>` : ''}</div></div></div>
+      <div class="sharebox"><div style="font-size:2rem">🖥</div><div><b>表示用（モニタをつないだ別のPCで開く）</b><div class="u">${esc(dispUrl)}</div><button data-copy="disp">コピー</button></div></div>
+      <div class="sharebox"><div id="rmQr" style="font-size:2rem">📱</div><div><b>リモコン用（スマホでこの操作画面を開く）</b><div class="u">${esc(remoteUrl)}</div><div class="row"><button data-copy="remote">コピー</button><button id="rmShow">QRを表示</button></div></div></div>
+      <p class="warn">⚠ 表示用とリモコン用のURLにはマスターのカギが入っています。観客には見せないでください。${DEMO ? '<br>（おためしモードでは、同じブラウザの中でしか動きません）' : ''}</p>
+      <div class="row" style="justify-content:flex-end"><button data-close>閉じる</button></div>`);
+    $$('[data-copy]', m).forEach(b => b.onclick = () => copyText({ join: joinUrl, disp: dispUrl, remote: remoteUrl }[b.dataset.copy]));
+    $('#rmShow', m).onclick = () => { const q = qrDataUrl(remoteUrl); if (q) $('#rmQr', m).innerHTML = `<img src="${q}" alt="">`; else toast('QRコードを作れませんでした'); };
+  };
+  $('#btnSave').onclick = () => {
+    const m = openModal(`<h2>💾 結果を保存</h2><p>この部屋で出したアンケートの結果を、ぜんぶファイルに保存します。<br><small>部屋と結果は24時間で消えるので、残したいときは保存してね。</small></p>
+      <div class="row"><button class="primary" id="sCsv">CSV（エクセル用）</button><button id="sJson">JSON</button><button data-close>閉じる</button></div>`);
+    const get = async () => { const res = await API.exportAll(code, secret); if (!res.ok) { toast(errMsg(res.error)); return null; } if (!res.runs.length) { toast('まだ結果がありません'); return null; } return res; };
+    const d = new Date(), stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+    $('#sJson', m).onclick = async () => { const r = await get(); if (r) { download(`アンケート結果_${code}_${stamp}.json`, JSON.stringify(r, null, 2), 'application/json'); m.remove(); } };
+    $('#sCsv', m).onclick = async () => {
+      const r = await get(); if (!r) return;
+      const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const withNames = r.anon_mode !== 'full';
+      const rows = [['番号', '質問', '開始時刻', '選択肢', '人数', '割合(%)', '回答者数'].concat(withNames ? ['名前'] : [])];
+      r.runs.forEach((x, k) => x.options.forEach((o, i) => rows.push([k + 1, x.question, fmtTime(x.started_at), o, x.counts[i], x.total ? Math.round(x.counts[i] * 1000 / x.total) / 10 : 0, x.total].concat(withNames ? [(x.names && x.names[i] || []).join('、')] : []))));
+      download(`アンケート結果_${code}_${stamp}.csv`, '﻿' + rows.map(rw => rw.map(cell).join(',')).join('\r\n'), 'text/csv'); m.remove();
+    };
+  };
+  $('#btnEnd').onclick = async () => {
+    if (!confirm('部屋を終了しますか？\n参加者は入れなくなり、結果も消えます。\n（先に「結果を保存」しておくと安心です）')) return;
+    const res = await API.closeRoom(code, secret);
+    if (!res.ok) return toast(errMsg(res.error));
+    API.ping(code); dropMyRoom(code); location.href = pageUrl();
+  };
+
+  /* --- おためし：ダミー参加者 --- */
+  const bots = [];
+  const NAMES = ['たろう', 'はなこ', 'けんじ', 'さくら', 'ゆうき', 'みどり', 'ひろし', 'あおい', 'そうた', 'ももこ', 'だいち', 'りん', 'かずき', 'なな', 'しょう', 'えみ', 'りく', 'ほのか', 'こうへい', 'ちひろ'];
+  async function addBots(n) {
+    if (!w.room) return;
+    for (let i = 0; i < n; i++) {
+      const d = 'bot-' + uid(10);
+      const res = await API.join(code, w.room.pin, d, 'ダミー' + NAMES[Math.floor(Math.random() * NAMES.length)]);
+      if (res.ok) bots.push({ d, vt: 'vt-' + uid(12) });
+    }
+    w.refresh(); toast(`ダミー${n}人が参加しました`);
+  }
+  function runBots(st) {
+    if (!bots.length || !$('#botAuto') || !$('#botAuto').checked) return;
+    const n = st.run.options.length, wts = Array.from({ length: n }, () => Math.random() + 0.25), sum = wts.reduce((a, b) => a + b, 0);
+    const pick = () => { let x = Math.random() * sum; for (let i = 0; i < n; i++) { x -= wts[i]; if (x <= 0) return i; } return n - 1; };
+    const span = st.ends_at ? Math.max(1200, st.ends_at - Clock.now() - 1000) : 9000;
+    bots.forEach(b => {
+      if (Math.random() < 0.08) return;
+      setTimeout(() => {
+        API.vote(code, b.d, b.vt, st.run.id, pick());
+        if (Math.random() < 0.12) setTimeout(() => API.vote(code, b.d, b.vt, st.run.id, Math.floor(Math.random() * n)), 1500);
+      }, Math.random() * span * 0.85);
+    });
+  }
+  if (DEMO) { $('#bot10').onclick = () => addBots(10); $('#bot30').onclick = () => addBots(30); }
+}
+
+/* =========================================================
+   はじまり
+   ========================================================= */
+(async function main() {
+  try { API = DEMO ? makeLocalServer() : await makeSupaServer(); }
+  catch (e) { $('#app').innerHTML = msgPage('📡', 'サーバーにつながりません', '電波を確認して、ページを読みこみ直してください。', false); return; }
+  loadScript(QR_SRC).then(() => { qrReady = true; document.dispatchEvent(new Event('qrready')); }).catch(() => {});
+  const r = Q.get('r'), op = Q.get('op'), disp = Q.get('disp');
+  if (r) participantView(r.toUpperCase());
+  else if (op) operatorView(op.toUpperCase());
+  else if (disp) displayView(disp.toUpperCase());
+  else landingView();
+})();
+</script>
+</body>
+</html>
