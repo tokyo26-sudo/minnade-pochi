@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.6</title>
+<title>みんなでポチッ v0.7</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -422,6 +422,13 @@ function makeLocalServer() {
       if (r.state.phase === 'result' && r.state.run && r.state.run.phoneResult) o.results = tally(r, r.state.run.id, false);
       return ok(o);
     },
+    async removeBots(code, secret) {
+      const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
+      let n = 0;
+      for (const k of Object.keys(r.participants)) if (k.startsWith('bot-')) { delete r.participants[k]; n++; }
+      for (const v of Object.values(r.votes)) for (const k of Object.keys(v)) if (k.startsWith('bot-') || k.startsWith('vtbot-')) delete v[k];
+      save(db); return ok({ removed: n });
+    },
     async getQuestions(code, secret) { const r = auth(load(), code, secret); if (!r) return ng('no_room'); return ok({ questions: r.questions || [], qrev: r.qrev || 0 }); },
     async setQuestions(code, secret, qs) {
       const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
@@ -486,6 +493,7 @@ async function makeSupaServer() {
     results: (c, s, run) => rpc('ev_results', { p_code: c, p_secret: s, p_run_id: run }),
     exportAll: (c, s) => rpc('ev_export', { p_code: c, p_secret: s }),
     closeRoom: (c, s) => rpc('ev_close_room', { p_code: c, p_secret: s }),
+    removeBots: (c, s) => rpc('ev_remove_bots', { p_code: c, p_secret: s }),
     getQuestions: (c, s) => rpc('ev_get_questions', { p_code: c, p_secret: s }),
     setQuestions: (c, s, q) => rpc('ev_set_questions', { p_code: c, p_secret: s, p_questions: q }),
     // リアルタイム通信は「変わったよ」の合図だけ。中身はかならずサーバーに取りに行く（いたずら合図対策）
@@ -501,6 +509,9 @@ async function makeSupaServer() {
 let API;
 
 /* ---------- 自分の部屋リスト ---------- */
+const PW_KEY = 'evapp_master_pw';
+const DUMMY_KEY = 'evapp_dummy_on';
+const dummyOn = () => store.get(DUMMY_KEY, false) === true;
 const ROOMS_KEY = DEMO ? 'evapp_myrooms_demo' : 'evapp_myrooms';
 const myRooms = () => store.get(ROOMS_KEY, []).filter(r => Date.now() - r.created < DAY);
 function saveMyRoom(r) { const list = myRooms().filter(x => x.code !== r.code); list.unshift(r); store.set(ROOMS_KEY, list.slice(0, 20)); }
@@ -514,7 +525,7 @@ function landingView(prefill) {
   const rooms = myRooms();
   $('#app').innerHTML = `<div class="land">
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.6</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.7</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -525,7 +536,9 @@ function landingView(prefill) {
       <div class="f"><span>質問を前もって用意したとき（任意）</span><label class="btn">📂 ファイルから読みこむ<input type="file" id="lFile" accept=".json,application/json" hidden></label>
         <small class="muted" style="display:block;margin-top:4px">「質問セット」や「記録ファイル」を選ぶと、部屋の名前・名前のあつかい・質問がまとめて入ります</small></div>
       <div class="fileinfo" id="lFileInfo" hidden></div>
-      ${DEMO ? '' : `<label class="f"><span>マスターパスワード</span><input id="lPw" type="password" autocomplete="current-password"></label>`}
+      ${DEMO ? '' : store.get(PW_KEY) ? `<div class="f pwsaved"><span>マスターパスワード</span>🔑 このPCに保存ずみ <button class="mini" id="lPwForget">変更・忘れる</button></div>`
+        : `<label class="f"><span>マスターパスワード</span><input id="lPw" type="password" autocomplete="current-password"></label>
+           <label class="chk"><input type="checkbox" id="lPwRem" checked> このPCで覚える（次から入力しなくてよくなります。共用PCでは外してね）</label>`}
       <button class="primary big" id="lCreate">部屋をつくる</button>
     </div>
     ${rooms.length ? `<div class="card"><h3>🗂 このブラウザでつくった部屋 <small>（24時間で消えます）</small></h3>
@@ -542,6 +555,7 @@ function landingView(prefill) {
     </div>
   </div>`;
   let pendingQ = [];
+  const fg = $('#lPwForget'); if (fg) fg.onclick = () => { store.del(PW_KEY); landingView(); };
   function applyFile(got, from) {
     pendingQ = got.questions || [];
     if (got.title) $('#lTitle').value = got.title;
@@ -556,7 +570,8 @@ function landingView(prefill) {
     try { const got = questionsFromFile(JSON.parse(await f.text())); if (!got) throw 0; applyFile(got, f.name); }
     catch { toast('読みこめませんでした（このアプリで書き出したファイルを選んでね）', 4000); }
   };
-  if (prefill) applyFile(prefill, prefill.from || 'ファイル');
+  if (prefill && (!prefill.keep || (prefill.questions && prefill.questions.length))) applyFile(prefill, prefill.from || 'ファイル');
+  else if (prefill && prefill.keep) { if (prefill.title) $('#lTitle').value = prefill.title; const r = $(`input[name=lMode][value=${prefill.anon_mode}]`); if (r) r.checked = true; }
   $('#lRec').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try { const rec = parseRecord(JSON.parse(await f.text())); if (!rec) throw 0; recordView(rec, false); }
@@ -570,7 +585,15 @@ function landingView(prefill) {
     const btn = $('#lCreate'); btn.disabled = true;
     const title = $('#lTitle').value.trim();
     const anon = ($('input[name=lMode]:checked') || {}).value || 'master';
-    const res = await API.createRoom({ password: DEMO ? '' : $('#lPw').value, title, anon });
+    const savedPw = DEMO ? '' : store.get(PW_KEY);
+    const pw = DEMO ? '' : (savedPw || $('#lPw').value);
+    const res = await API.createRoom({ password: pw, title, anon });
+    if (!DEMO && res.ok && !savedPw && $('#lPwRem') && $('#lPwRem').checked) store.set(PW_KEY, pw);
+    if (!DEMO && !res.ok && res.error === 'bad_password' && savedPw) {
+      store.del(PW_KEY); btn.disabled = false;
+      toast('保存していたパスワードが合いません。もう一度入れてください', 4500);
+      return landingView({ questions: pendingQ, title: $('#lTitle').value, anon_mode: anon, from: 'さっきのファイル', keep: true });
+    }
     if (!res.ok) { btn.disabled = false; return toast(errMsg(res.error)); }
     if (pendingQ.length) {
       const qr = await API.setQuestions(res.code, res.secret, pendingQ);
@@ -1065,6 +1088,7 @@ function operatorView(code) {
       <button class="primary" id="btnDisp">🖥 表示用ウィンドウを開く</button>
       <button id="btnShare">🔗 URL・QR</button>
       <button id="btnSave">💾 結果を保存</button>
+      <button id="btnSet">⚙️ 設定</button>
       <button class="danger" id="btnEnd">部屋を終了</button>
     </div>
   </header>
@@ -1074,8 +1098,9 @@ function operatorView(code) {
       <div class="left">
         <div class="card"><h3>⚡ サッと出題</h3><div id="quick">${qFields('qk', true)}</div><button class="primary big" id="qkGo" style="width:100%">この内容で出題する</button></div>
         <div class="card"><h3>📋 用意した質問 <small id="bankN"></small></h3><div id="bankRun"></div></div>
-        ${DEMO ? `<div class="card"><h3>🧪 おためし用</h3><p class="muted" style="margin-top:0;font-size:.88rem">ダミーの参加者を入れると、出題したときに勝手に投票してくれます。本物の参加者は「URL・QR」から別タブで開いてね。</p>
-          <div class="row"><button id="bot10">ダミーを10人入れる</button><button id="bot30">30人入れる</button><label class="chk" style="margin:0"><input type="checkbox" id="botAuto" checked> 自動で投票させる</label></div></div>` : ''}
+        <div class="card" id="dummyCard" hidden><h3>🧪 テスト用ダミー <small id="botN"></small></h3><p class="muted" style="margin-top:0;font-size:.88rem">ダミーの参加者を入れると、出題したときに勝手に投票してくれます。本番の前に「全員帰らせる」を押してね。（⚙️ 設定でかくせます）</p>
+          <div class="row"><button id="bot10">ダミーを10人入れる</button><button id="bot30">30人入れる</button><button class="danger" id="botKick">全員帰らせる</button></div>
+          <label class="chk" style="margin:10px 0 0"><input type="checkbox" id="botAuto" checked> 出題したら自動で投票させる</label></div>
       </div>
       <div class="right">
         <div class="card"><div id="status"></div></div>
@@ -1085,8 +1110,7 @@ function operatorView(code) {
     </section>
     <section id="tabHist" class="op-hist" hidden>
       <div class="card"><h3>📜 この部屋で出した質問</h3>
-        <label class="chk"><input type="checkbox" id="bkOn"> このPCのブラウザに結果の控えを自動で残す</label>
-        <p class="muted" style="font-size:.82rem;margin:-6px 0 10px">控えは部屋が消えたあとも、トップの「記録を見る」から開けます。共用PCではオフにしてね。</p>
+        <p class="muted" style="font-size:.82rem;margin:0 0 10px" id="bkNote"></p>
         <div class="row"><button id="histSave">💾 結果を保存（ダウンロード）</button><button id="histReload">↻ 最新にする</button></div></div>
       <div id="histList"></div>
     </section>
@@ -1125,7 +1149,7 @@ function operatorView(code) {
     $('#hMode').textContent = `${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}`;
     renderStatus(); renderOpRes(); stage.update();
     const st = cur();
-    if (DEMO && st.phase === 'open' && st.run && !botRuns.has(st.run.id)) { botRuns.add(st.run.id); runBots(st); }
+    if (dummyOn() && st.phase === 'open' && st.run && !botRuns.has(st.run.id)) { botRuns.add(st.run.id); runBots(st); }
   }
 
   /* --- いまの状態と操作ボタン --- */
@@ -1206,11 +1230,26 @@ function operatorView(code) {
 
   /* --- 履歴 --- */
   let lastRec = null, histRev = null, histT = null, histBusy = false;
-  $('#bkOn').checked = backupOn();
-  $('#bkOn').onchange = e => {
-    store.set(BACKUP_ON_KEY, e.target.checked);
-    if (e.target.checked) { if (lastRec) saveBackup(lastRec); toast('控えを残すようにしました'); }
+  const bkNote = () => { $('#bkNote').textContent = backupOn() ? '💾 このPCのブラウザに結果の控えを自動で残しています（⚙️ 設定で変えられます）' : '💾 ブラウザへの控えはオフです（⚙️ 設定で変えられます）'; };
+  bkNote();
+  function setBackup(on) {
+    store.set(BACKUP_ON_KEY, on); bkNote();
+    if (on) { if (lastRec) saveBackup(lastRec); toast('控えを残すようにしました'); }
     else if (store.get(BK_PREFIX + code) && confirm('このPCに残っている、この部屋の控えも消しますか？')) { delBackup(code); toast('控えを消しました'); }
+  }
+  function applyDummy() { $('#dummyCard').hidden = !dummyOn(); }
+  applyDummy();
+  $('#btnSet').onclick = () => {
+    const m = openModal(`<h2>⚙️ 設定 <small class="muted" style="font-size:.8rem">（このPCのブラウザに覚えます）</small></h2>
+      <label class="chk"><input type="checkbox" id="sDummy" ${dummyOn() ? 'checked' : ''}> 🧪 テスト用ダミーを使う</label>
+      <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">進行タブにダミー参加者の箱が出ます。本番のときはオフに。</p>
+      <label class="chk"><input type="checkbox" id="sBk" ${backupOn() ? 'checked' : ''}> 💾 このPCのブラウザに結果の控えを自動で残す</label>
+      <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">保存し忘れても、トップの「このPCに残っている控え」から見られます。共用PCではオフに。</p>
+      ${DEMO ? '' : `<p class="muted" style="font-size:.82rem">🔑 マスターパスワード：${store.get(PW_KEY) ? 'このPCに保存ずみ　<button class="mini" id="sPwDel">忘れる</button>' : '保存していません'}</p>`}
+      <div class="row" style="justify-content:flex-end"><button class="primary" data-close>閉じる</button></div>`);
+    $('#sDummy', m).onchange = e => { store.set(DUMMY_KEY, e.target.checked); applyDummy(); };
+    $('#sBk', m).onchange = e => setBackup(e.target.checked);
+    const pd = $('#sPwDel', m); if (pd) pd.onclick = () => { store.del(PW_KEY); pd.parentNode.textContent = '🔑 マスターパスワード：保存していません'; toast('パスワードを忘れました'); };
   };
   async function refreshHistory() {
     if (histBusy) return; histBusy = true;
@@ -1368,16 +1407,20 @@ function operatorView(code) {
     API.ping(code); dropMyRoom(code); location.href = pageUrl();
   };
 
-  /* --- おためし：ダミー参加者 --- */
-  const bots = [];
+  /* --- テスト用ダミー参加者 --- */
+  const BOTS_KEY = 'evapp_bots_' + code;
+  const bots = store.get(BOTS_KEY, []);
+  const botCount = () => { $('#botN').textContent = bots.length ? `（いま${bots.length}人）` : ''; };
+  botCount();
   const NAMES = ['たろう', 'はなこ', 'けんじ', 'さくら', 'ゆうき', 'みどり', 'ひろし', 'あおい', 'そうた', 'ももこ', 'だいち', 'りん', 'かずき', 'なな', 'しょう', 'えみ', 'りく', 'ほのか', 'こうへい', 'ちひろ'];
   async function addBots(n) {
     if (!w.room) return;
     for (let i = 0; i < n; i++) {
       const d = 'bot-' + uid(10);
       const res = await API.join(code, w.room.pin, d, 'ダミー' + NAMES[Math.floor(Math.random() * NAMES.length)]);
-      if (res.ok) bots.push({ d, vt: 'vt-' + uid(12) });
+      if (res.ok) bots.push({ d, vt: 'vtbot-' + uid(12) });
     }
+    store.set(BOTS_KEY, bots); botCount();
     w.refresh(); toast(`ダミー${n}人が参加しました`);
   }
   function runBots(st) {
@@ -1393,7 +1436,15 @@ function operatorView(code) {
       }, Math.random() * span * 0.85);
     });
   }
-  if (DEMO) { $('#bot10').onclick = () => addBots(10); $('#bot30').onclick = () => addBots(30); }
+  $('#bot10').onclick = () => addBots(10); $('#bot30').onclick = () => addBots(30);
+  $('#botKick').onclick = async () => {
+    if (!confirm('ダミーを全員帰らせますか？（ダミーの投票も消えます）')) return;
+    const res = await API.removeBots(code, secret);
+    if (!res.ok) return toast(errMsg(res.error));
+    bots.length = 0; store.del(BOTS_KEY); botCount();
+    w.refresh(); w.refreshResults(); API.ping(code); if (!$('#tabHist').hidden) refreshHistory();
+    toast(`ダミー${res.removed}人が帰りました`);
+  };
 }
 
 /* =========================================================
