@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.4</title>
+<title>みんなでポチッ v0.5</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -494,7 +494,7 @@ function landingView() {
   const rooms = myRooms();
   $('#app').innerHTML = `<div class="land">
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.4</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.5</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -511,7 +511,7 @@ function landingView() {
     <div class="card"><h3>📂 記録を見る</h3>
       <p class="muted" style="margin:0 0 10px;font-size:.88rem">「結果を保存」でダウンロードした記録ファイル（.json）を開くと、サーバーから消えたあとでも質問と結果が見られます。</p>
       <label class="btn">📂 記録ファイルを開く<input type="file" id="lRec" accept=".json,application/json" hidden></label>
-      ${listBackups().length ? `<div style="margin-top:14px"><div class="f"><span>💾 このPCに残っている控え</span></div>${listBackups().map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">${fmtTime(r.saved_at)} 保存</span><span class="chip">${r.runs.length}問</span><span class="chip">${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}</span></div></div><div class="acts"><button data-bk="${esc(r.code)}">ひらく</button><button class="danger" data-bkdel="${esc(r.code)}">削除</button></div></div>`).join('')}</div>` : ''}
+      ${listBackups().length ? `<div style="margin-top:14px"><div class="f"><span>💾 このPCに残っている控え</span></div>${listBackups().map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">${fmtTime(r.saved_at)} 保存</span><span class="chip">${r.runs.length}問</span><span class="chip">${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}</span>${r._demo ? '<span class="chip">🧪 おためし</span>' : ''}</div></div><div class="acts"><button data-bk="${esc(r._key)}">ひらく</button><button class="danger" data-bkdel="${esc(r._key)}">削除</button></div></div>`).join('')}</div>` : ''}
     </div>
     <div class="card"><h3>🙋 参加する</h3>
       <div class="row"><input id="lCode" placeholder="部屋コード（6文字）" maxlength="6" autocapitalize="characters" style="flex:1;text-transform:uppercase"><button id="lJoin">参加</button></div>
@@ -523,8 +523,8 @@ function landingView() {
     try { const rec = parseRecord(JSON.parse(await f.text())); if (!rec) throw 0; recordView(rec, false); }
     catch { toast('開けませんでした（このアプリの「結果を保存」で作ったファイルを選んでね）', 4000); }
   };
-  $$('[data-bk]').forEach(b => b.onclick = () => { const r = parseRecord(store.get(BK_PREFIX + b.dataset.bk)); if (r) recordView(r, true); });
-  $$('[data-bkdel]').forEach(b => b.onclick = () => { if (confirm('この控えを削除しますか？（もとに戻せません）')) { delBackup(b.dataset.bkdel); landingView(); } });
+  $$('[data-bk]').forEach(b => b.onclick = () => { if (!b.dataset.bk.startsWith('evapp_bk_')) return; const r = parseRecord(store.get(b.dataset.bk)); if (r) recordView(r, true); else toast('控えを開けませんでした'); });
+  $$('[data-bkdel]').forEach(b => b.onclick = () => { if (!b.dataset.bkdel.startsWith('evapp_bk_')) return; if (confirm('この控えを削除しますか？（もとに戻せません）')) { store.del(b.dataset.bkdel); landingView(); } });
   $('#lJoin').onclick = () => { const c = $('#lCode').value.trim().toUpperCase(); if (c) location.href = pageUrl({ r: c }); };
   $('#lCode').onkeydown = e => { if (e.key === 'Enter') $('#lJoin').click(); };
   $('#lCreate').onclick = async () => {
@@ -866,7 +866,7 @@ function saveBackup(rec) { if (rec && rec.code && rec.runs.length) store.set(BK_
 function delBackup(code) { store.del(BK_PREFIX + code); }
 function listBackups() {
   const out = [];
-  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(BK_PREFIX)) { const r = store.get(k); if (r && r.runs) out.push(r); } } } catch {}
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('evapp_bk_')) { const r = store.get(k); if (r && r.runs) out.push({ ...r, _key: k, _demo: k.startsWith('evapp_bk_demo_') }); } } } catch {}
   return out.sort((a, b) => b.saved_at - a.saved_at);
 }
 function runToQuestion(run) {
