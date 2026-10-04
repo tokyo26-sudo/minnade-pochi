@@ -35,6 +35,7 @@ create table if not exists public.ev_runs (
   run_id     text not null,
   question   text not null,
   options    jsonb not null,
+  settings   jsonb not null default '{}'::jsonb,
   started_at timestamptz not null default now(),
   primary key (room_code, run_id)
 );
@@ -49,6 +50,7 @@ create table if not exists public.ev_votes (
   primary key (room_code, run_id, voter_key),
   foreign key (room_code, run_id) references public.ev_runs(room_code, run_id) on delete cascade
 );
+alter table public.ev_runs add column if not exists settings jsonb not null default '{}'::jsonb;
 create index if not exists ev_votes_tally on public.ev_votes (room_code, run_id, choice);
 
 -- テーブルは直接さわれないようにする（ぜんぶ下の関数経由）
@@ -168,8 +170,9 @@ begin
     if v_len < 2 or v_len > 6 or coalesce(p_run->>'id', '') = '' then
       return jsonb_build_object('ok', false, 'error', 'bad_run', 'server_now', ev_now_ms());
     end if;
-    insert into ev_runs (room_code, run_id, question, options)
-    values (r.code, p_run->>'id', left(coalesce(p_run->>'question', ''), 300), p_run->'options')
+    insert into ev_runs (room_code, run_id, question, options, settings)
+    values (r.code, p_run->>'id', left(coalesce(p_run->>'question', ''), 300), p_run->'options',
+            case when jsonb_typeof(p_run->'settings') = 'object' then p_run->'settings' else '{}'::jsonb end)
     on conflict (room_code, run_id) do nothing;
   end if;
   -- 締め切り時刻はサーバーの時計で決める
@@ -286,7 +289,7 @@ begin
   if not found then return jsonb_build_object('ok', false, 'error', 'no_room', 'server_now', ev_now_ms()); end if;
   return jsonb_build_object('ok', true, 'server_now', ev_now_ms(), 'title', r.title, 'anon_mode', r.anon_mode,
     'runs', coalesce((
-      select jsonb_agg(jsonb_build_object('run_id', x.run_id, 'question', x.question, 'options', x.options,
+      select jsonb_agg(jsonb_build_object('run_id', x.run_id, 'question', x.question, 'options', x.options, 'settings', x.settings,
                                           'started_at', (extract(epoch from x.started_at) * 1000)::bigint)
                        || coalesce(ev_tally(r.code, x.run_id, r.anon_mode <> 'full'), '{}'::jsonb)
                        order by x.started_at)

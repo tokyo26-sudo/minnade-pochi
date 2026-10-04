@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ</title>
+<title>みんなでポチッ v0.3</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -128,6 +128,7 @@ body.v-disp.idle{cursor:none}
 .st-pinlabel{font-size:3.2cqh;opacity:.7}
 .st-pin{font-size:min(17cqh,12cqw);font-weight:900;letter-spacing:.1em;font-variant-numeric:tabular-nums;color:#ffd54a;line-height:1.05}
 .st-url{font-size:2.5cqh;opacity:.6;margin-top:2.4cqh;word-break:break-all;max-width:46cqw}
+.st-demo{margin-top:2cqh;font-size:2.4cqh;background:#ffb020;color:#1d2433;border-radius:1cqh;padding:.6cqh 1.2cqh;font-weight:800;max-width:46cqw}
 .st-count{font-size:5.4cqh;font-weight:900}
 .st-timer{display:flex;align-items:center;gap:2cqw;margin-bottom:3cqh}
 .st-bar{flex:1;height:2.4cqh;background:rgba(255,255,255,.13);border-radius:99px;overflow:hidden}
@@ -203,6 +204,19 @@ body.v-op{background:#eef0f5}
 .sharebox{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
 .sharebox img{width:132px;height:132px;image-rendering:pixelated;border:6px solid #fff;outline:1px solid var(--line);border-radius:6px}
 .sharebox .u{font-size:.8rem;word-break:break-all;background:#f4f5f9;border-radius:8px;padding:6px 8px;margin:6px 0}
+.op-hist{max-width:980px}
+.op-hist>.card:first-child{border-top-left-radius:0}
+.hrun{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff}
+.hrun.now{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft)}
+.hrun-h{display:flex;gap:8px 12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:4px}
+.hrun-q{font-weight:800;word-break:break-word}
+.hrun-q small{font-weight:600;color:var(--sub);margin-right:.4em}
+.hrun-acts{display:flex;gap:6px;flex-wrap:wrap}
+.hrun-acts button{font-size:.85rem;padding:.4em .8em}
+.chip.live{background:var(--brand);color:#fff}
+.rec{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+.rec-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rec-head h1{margin:0;font-size:1.5rem}
 @media (max-width:980px){
   .op-run,.op-edit{grid-template-columns:1fr}
   .op-run .right{order:-1}
@@ -308,7 +322,7 @@ const BTN_TYPES = {
   yesnoEn: { name: 'YES／NO', fixed: ['YES', 'NO'] },
   num:     { name: '1番・2番・3番…', gen: n => Array.from({ length: n }, (_, i) => `${i + 1}番`) },
   abc:     { name: 'A・B・C…', gen: n => 'ABCDEF'.slice(0, n).split('') },
-  custom:  { name: 'ボタンの文字を自分で決める' },
+  custom:  { name: '✏️ 自分で文字を入れる' },
 };
 function buildOptions(q) {
   const t = BTN_TYPES[q.type]; if (!t) return [];
@@ -384,7 +398,7 @@ function makeLocalServer() {
     async setState(code, secret, state, duration, run) {
       const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
       const st = { ...state };
-      if (run && !r.runs[run.id]) r.runs[run.id] = { question: run.question, options: run.options, started_at: Date.now() };
+      if (run && !r.runs[run.id]) r.runs[run.id] = { question: run.question, options: run.options, settings: run.settings || {}, started_at: Date.now() };
       if (duration > 0) st.ends_at = Date.now() + duration * 1000;
       st.rev = (r.state.rev || 0) + 1; r.state = st; save(db); return ok({ state: st });
     },
@@ -420,7 +434,7 @@ function makeLocalServer() {
     async exportAll(code, secret) {
       const r = auth(load(), code, secret); if (!r) return ng('no_room');
       const runs = Object.entries(r.runs).sort((a, b) => a[1].started_at - b[1].started_at)
-        .map(([id, x]) => ({ run_id: id, question: x.question, options: x.options, started_at: x.started_at, ...tally(r, id, r.anon_mode !== 'full') }));
+        .map(([id, x]) => ({ run_id: id, question: x.question, options: x.options, settings: x.settings || {}, started_at: x.started_at, ...tally(r, id, r.anon_mode !== 'full') }));
       return ok({ title: r.title, anon_mode: r.anon_mode, runs });
     },
     async closeRoom(code, secret) { const db = load(); if (auth(db, code, secret)) delete db.rooms[code.toUpperCase()]; save(db); return ok({}); },
@@ -480,7 +494,7 @@ function landingView() {
   const rooms = myRooms();
   $('#app').innerHTML = `<div class="land">
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート</p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.3</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -494,11 +508,23 @@ function landingView() {
     ${rooms.length ? `<div class="card"><h3>🗂 このブラウザでつくった部屋 <small>（24時間で消えます）</small></h3>
       ${rooms.map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">コード ${esc(r.code)}</span><span class="chip">${fmtTime(r.created)} 作成</span><span class="chip">${modeOf(r.anon).icon} ${modeOf(r.anon).name}</span></div></div><a class="btn" href="${esc(pageUrl({ op: r.code }))}">ひらく</a></div>`).join('')}
     </div>` : ''}
+    <div class="card"><h3>📂 記録を見る</h3>
+      <p class="muted" style="margin:0 0 10px;font-size:.88rem">「結果を保存」でダウンロードした記録ファイル（.json）を開くと、サーバーから消えたあとでも質問と結果が見られます。</p>
+      <label class="btn">📂 記録ファイルを開く<input type="file" id="lRec" accept=".json,application/json" hidden></label>
+      ${listBackups().length ? `<div style="margin-top:14px"><div class="f"><span>💾 このPCに残っている控え</span></div>${listBackups().map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">${fmtTime(r.saved_at)} 保存</span><span class="chip">${r.runs.length}問</span><span class="chip">${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}</span></div></div><div class="acts"><button data-bk="${esc(r.code)}">ひらく</button><button class="danger" data-bkdel="${esc(r.code)}">削除</button></div></div>`).join('')}</div>` : ''}
+    </div>
     <div class="card"><h3>🙋 参加する</h3>
       <div class="row"><input id="lCode" placeholder="部屋コード（6文字）" maxlength="6" autocapitalize="characters" style="flex:1;text-transform:uppercase"><button id="lJoin">参加</button></div>
       <p class="muted" style="margin:.6em 0 0;font-size:.85rem">ふつうは会場のQRコードから入れます</p>
     </div>
   </div>`;
+  $('#lRec').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { const rec = parseRecord(JSON.parse(await f.text())); if (!rec) throw 0; recordView(rec, false); }
+    catch { toast('開けませんでした（このアプリの「結果を保存」で作ったファイルを選んでね）', 4000); }
+  };
+  $$('[data-bk]').forEach(b => b.onclick = () => { const r = parseRecord(store.get(BK_PREFIX + b.dataset.bk)); if (r) recordView(r, true); });
+  $$('[data-bkdel]').forEach(b => b.onclick = () => { if (confirm('この控えを削除しますか？（もとに戻せません）')) { delBackup(b.dataset.bkdel); landingView(); } });
   $('#lJoin').onclick = () => { const c = $('#lCode').value.trim().toUpperCase(); if (c) location.href = pageUrl({ r: c }); };
   $('#lCode').onkeydown = e => { if (e.key === 'Enter') $('#lJoin').click(); };
   $('#lCreate').onclick = async () => {
@@ -589,7 +615,7 @@ function makeStage(el, getW, joinUrl) {
           ${qr ? `<div class="st-qr"><img src="${qr}" alt="参加用QRコード"></div>` : ''}
           <div><div class="st-lead">スマホで${qr ? 'QRコードを読みこんで' : '下のURLを開いて'}<br>参加してね！</div>
             <div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div>
-            <div class="st-url">${esc(joinUrl)}</div></div>
+            <div class="st-url">${esc(joinUrl)}</div>${DEMO ? '<div class="st-demo">🧪 おためしモード：このPCの中だけで動いています（スマホからは参加できません）</div>' : ''}</div>
         </div>
         <div class="st-foot"><span class="st-count">🙋 <b data-pc>0</b>人 参加中</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}：${modeOf(room.anon_mode).desc}</span></div></div>`;
     }
@@ -708,7 +734,9 @@ function participantView(code) {
   }
   function render() {
     if (!pub) { if (key !== 'load') { key = 'load'; app.innerHTML = `<div class="p-wrap"><div class="p-main p-center"><div class="dots"><i></i><i></i><i></i></div></div></div>`; } return; }
-    if (pub.gone) { if (key !== 'gone') { key = 'gone'; app.innerHTML = msgPage('🚪', '部屋が見つかりません', 'アンケートは終了したか、URLがちがうようです。', false); } return; }
+    if (pub.gone) { if (key !== 'gone') { key = 'gone'; app.innerHTML = DEMO
+      ? msgPage('🧪', 'いまは「おためしモード」です', 'おためしモードは、部屋をつくったPCのブラウザの中だけで動きます。別のスマホやPCから参加するには、マスターがサーバー（Supabase）につないで本番モードにしてください。', false)
+      : msgPage('🚪', '部屋が見つかりません', 'アンケートは終了したか、URLがちがうようです。', false); } return; }
     if (!joined) return renderJoin();
     const st = pub.state || {}, run = st.run;
     const expired = st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at;
@@ -799,6 +827,103 @@ function participantView(code) {
 }
 
 /* =========================================================
+   イベント記録（履歴・記録ファイル・ブラウザの控え）
+   ========================================================= */
+const BACKUP_ON_KEY = 'evapp_autobackup';
+const backupOn = () => store.get(BACKUP_ON_KEY, true) !== false;
+const BK_PREFIX = DEMO ? 'evapp_bk_demo_' : 'evapp_bk_';
+const strArr = (a, n, len) => (Array.isArray(a) ? a : []).slice(0, n).map(x => String(x ?? '').slice(0, len));
+function cleanQuestion(q) {
+  if (!q || typeof q !== 'object' || !BTN_TYPES[q.type]) return null;
+  const c = { id: 'q' + uid(8), text: String(q.text || '').slice(0, 200), type: q.type, count: Math.min(6, Math.max(2, q.count | 0 || 4)),
+    labels: strArr(q.labels, 6, 24), duration: DURATIONS.some(d => d[0] === +q.duration) ? +q.duration : 30,
+    reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false };
+  return buildOptions(c).length >= 2 ? c : null;
+}
+const cleanQuestions = list => (Array.isArray(list) ? list : []).map(cleanQuestion).filter(Boolean);
+function makeRecord(res, code) {
+  return { app: 'minnade-pochi', kind: 'record', version: 1, code, title: res.title || '', anon_mode: res.anon_mode, saved_at: Date.now(),
+    runs: (res.runs || []).map(x => ({ run_id: x.run_id, question: x.question, options: x.options, settings: x.settings || {}, started_at: x.started_at,
+      counts: x.counts || [], total: x.total || 0, names: x.names || null })),
+    questions: loadBank() };
+}
+function parseRecord(obj) {
+  if (!obj || typeof obj !== 'object' || !Array.isArray(obj.runs)) return null;
+  const runs = obj.runs.map(x => {
+    if (!x || typeof x !== 'object') return null;
+    const options = strArr(x.options, 6, 40); if (options.length < 2) return null;
+    const counts = options.map((_, i) => Math.max(0, +((x.counts || [])[i]) || 0));
+    const st = x.settings && typeof x.settings === 'object' ? x.settings : {};
+    return { run_id: String(x.run_id || uid(8)), question: String(x.question || '').slice(0, 300), options, counts,
+      total: Math.max(0, +x.total || counts.reduce((a, b) => a + b, 0)), started_at: +x.started_at || 0,
+      names: Array.isArray(x.names) ? options.map((_, i) => strArr((x.names[i]), 2000, 40)) : null,
+      settings: { type: BTN_TYPES[st.type] ? st.type : 'custom', duration: +st.duration || 0, reveal: st.reveal === 'live' ? 'live' : 'after', showCount: st.showCount !== false } };
+  }).filter(Boolean);
+  return { app: 'minnade-pochi', kind: 'record', version: 1, code: String(obj.code || '').slice(0, 12), title: String(obj.title || '').slice(0, 60),
+    anon_mode: MODES[obj.anon_mode] ? obj.anon_mode : 'full', saved_at: +obj.saved_at || Date.now(), runs, questions: cleanQuestions(obj.questions) };
+}
+function saveBackup(rec) { if (rec && rec.code && rec.runs.length) store.set(BK_PREFIX + rec.code, rec); }
+function delBackup(code) { store.del(BK_PREFIX + code); }
+function listBackups() {
+  const out = [];
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(BK_PREFIX)) { const r = store.get(k); if (r && r.runs) out.push(r); } } } catch {}
+  return out.sort((a, b) => b.saved_at - a.saved_at);
+}
+function runToQuestion(run) {
+  const st = run.settings || {};
+  const base = { text: run.question, duration: st.duration || 0, reveal: st.reveal || 'after', showCount: st.showCount !== false };
+  const asType = { ...base, type: st.type, count: run.options.length };
+  if (BTN_TYPES[st.type] && st.type !== 'custom' && buildOptions(asType).join('\u0001') === run.options.join('\u0001')) return asType;
+  return { ...base, type: 'custom', count: run.options.length, labels: run.options.slice() };
+}
+function recordCsv(rec) {
+  const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const withNames = rec.anon_mode !== 'full';
+  const rows = [['番号', '質問', '開始時刻', '選択肢', '人数', '割合(%)', '回答者数'].concat(withNames ? ['名前'] : [])];
+  rec.runs.forEach((x, k) => x.options.forEach((o, i) => rows.push([k + 1, x.question, x.started_at ? fmtTime(x.started_at) : '', o, x.counts[i] || 0,
+    x.total ? Math.round((x.counts[i] || 0) * 1000 / x.total) / 10 : 0, x.total].concat(withNames ? [(x.names && x.names[i] || []).join('、')] : []))));
+  return '\uFEFF' + rows.map(rw => rw.map(cell).join(',')).join('\r\n');
+}
+const fileStamp = () => { const d = new Date(); return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`; };
+const recName = (rec, ext) => `アンケート記録_${(rec.title || rec.code || 'event').replace(/[\\/:*?"<>|\s]+/g, '_')}_${fileStamp()}.${ext}`;
+function runsHtml(rec, actions, nowId) {
+  if (!rec.runs.length) return '<p class="muted" style="margin:0">まだ出題していません</p>';
+  return rec.runs.map((run, k) => {
+    const tot = run.total, max = Math.max(1, ...run.counts), st = run.settings || {};
+    return `<div class="hrun ${run.run_id === nowId ? 'now' : ''}">
+      <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
+      <div class="chips" style="margin-bottom:6px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">${run.options.length}択</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">回答 ${tot}人</span></div>
+      ${run.options.map((o, i) => `<div class="ores-row" style="--c:${colorOf(i)}"><span class="ores-lab">${esc(o)}</span><span class="ores-bar"><i style="width:${run.counts[i] / max * 100}%"></i></span><span class="ores-n">${run.counts[i]}人 <small>${tot ? Math.round(run.counts[i] * 100 / tot) : 0}%</small></span>
+        ${run.names && run.names[i] && run.names[i].length ? `<div class="ores-names">${esc(run.names[i].join('、'))}</div>` : ''}</div>`).join('')}
+    </div>`;
+  }).join('');
+}
+function importQuestions(list) {
+  const clean = cleanQuestions(list); if (!clean.length) { toast('取りこめる質問がありません'); return 0; }
+  saveBank(loadBank().concat(clean)); toast(`${clean.length}問を質問リストに取りこみました`); return clean.length;
+}
+
+/* ---------- 記録を見る画面（ファイル・ブラウザの控え） ---------- */
+function recordView(rec, fromBackup) {
+  document.body.className = 'v-rec'; window.scrollTo(0, 0);
+  const m = modeOf(rec.anon_mode);
+  $('#app').innerHTML = `<div class="rec">
+    <div class="rec-head"><div><div class="muted" style="font-size:.85rem">📂 ${fromBackup ? 'このPCに残っている控え' : 'イベント記録ファイル'}</div><h1>${esc(rec.title || '（名前なし）')}</h1>
+      <div class="chips"><span class="chip">${m.icon} ${m.name}</span>${rec.code ? `<span class="chip">部屋 ${esc(rec.code)}</span>` : ''}<span class="chip">${fmtTime(rec.saved_at)} 保存</span><span class="chip">${rec.runs.length}問</span></div></div>
+      <div class="row"><button id="rvCsv">CSVで保存</button><button id="rvJson">記録ファイル(JSON)で保存</button><button class="primary" id="rvBack">トップへ</button></div></div>
+    <div class="card"><h3>📊 出した質問と結果</h3><div id="rvRuns">${runsHtml(rec, run => `<button data-imp="${esc(run.run_id)}">＋ 質問リストに取りこむ</button>`)}</div></div>
+    ${rec.questions.length ? `<div class="card"><h3>📋 このときの質問リスト（${rec.questions.length}問）</h3>
+      ${rec.questions.map(q => `<div class="qitem"><div class="qt"><b>${esc(q.text || '（質問文なし）')}</b><div class="chips">${qChips(q)}</div></div></div>`).join('')}
+      <button class="primary" id="rvImpAll">まとめて質問リストに取りこむ</button></div>` : ''}
+  </div>`;
+  $('#rvBack').onclick = landingView;
+  $('#rvCsv').onclick = () => download(recName(rec, 'csv'), recordCsv(rec), 'text/csv');
+  $('#rvJson').onclick = () => download(recName(rec, 'json'), JSON.stringify(rec, null, 2), 'application/json');
+  $$('[data-imp]').forEach(b => b.onclick = () => { const run = rec.runs.find(r => r.run_id === b.dataset.imp); if (run && importQuestions([runToQuestion(run)])) { b.disabled = true; b.textContent = '✓ 取りこみました'; } });
+  const all = $('#rvImpAll'); if (all) all.onclick = () => { if (importQuestions(rec.questions)) { all.disabled = true; all.textContent = '✓ 取りこみました'; } };
+}
+
+/* =========================================================
    マスター（操作画面）
    ========================================================= */
 const BANK_KEY = 'evapp_bank_v1';
@@ -813,10 +938,10 @@ function qFields(p, quick) {
   return `
     <label class="f"><span>質問文</span>${quick ? `<input id="${p}Text" maxlength="200" placeholder="（空欄なら「アンケート」）">` : `<textarea id="${p}Text" rows="3" maxlength="200" placeholder="例：今日のイベント、楽しかった？"></textarea>`}</label>
     <div class="f2">
-      <label class="f"><span>ボタン</span><select id="${p}Type">${Object.entries(BTN_TYPES).filter(([k]) => !quick || k !== 'custom').map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}</select></label>
+      <label class="f"><span>ボタン</span><select id="${p}Type">${Object.entries(BTN_TYPES).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}</select></label>
       <label class="f" id="${p}CountWrap"><span>ボタンの数</span><select id="${p}Count">${[2, 3, 4, 5, 6].map(n => `<option value="${n}" ${n === (quick ? 3 : 4) ? 'selected' : ''}>${n}択</option>`).join('')}</select></label>
     </div>
-    ${quick ? '' : `<div class="f" id="${p}LabelsWrap"><span>ボタンの文字（2〜6個。空欄は使いません）</span><div class="lbls">${[0, 1, 2, 3, 4, 5].map(i => `<input data-lbl="${i}" maxlength="24" placeholder="ボタン${i + 1}">`).join('')}</div></div>`}
+    ${`<div class="f" id="${p}LabelsWrap"><span>ボタンの文字（2〜6個。空欄は使いません）</span><div class="lbls">${[0, 1, 2, 3, 4, 5].map(i => `<input data-lbl="${i}" maxlength="24" placeholder="ボタン${i + 1}">`).join('')}</div></div>`}
     <div class="f2">
       <label class="f"><span>制限時間</span><select id="${p}Dur">${DURATIONS.map(([v, t]) => `<option value="${v}" ${v === 30 ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
       <label class="f"><span>結果の見せ方</span><select id="${p}Reveal"><option value="after">締め切ってから発表</option><option value="live">投票中も見せる</option></select></label>
@@ -883,7 +1008,7 @@ function operatorView(code) {
       <button class="danger" id="btnEnd">部屋を終了</button>
     </div>
   </header>
-  <nav class="op-tabs"><button data-tab="run" class="on">▶ 進行</button><button data-tab="edit">✏️ 質問をつくる</button></nav>
+  <nav class="op-tabs"><button data-tab="run" class="on">▶ 進行</button><button data-tab="hist">📜 履歴</button><button data-tab="edit">✏️ 質問をつくる</button></nav>
   <div class="op-body">
     <section id="tabRun" class="op-run">
       <div class="left">
@@ -898,6 +1023,13 @@ function operatorView(code) {
         <div class="card"><h3>📊 集計 <small>（マスターだけに見えています）</small></h3><div id="opres"></div></div>
       </div>
     </section>
+    <section id="tabHist" class="op-hist" hidden>
+      <div class="card"><h3>📜 この部屋で出した質問</h3>
+        <label class="chk"><input type="checkbox" id="bkOn"> このPCのブラウザに結果の控えを自動で残す</label>
+        <p class="muted" style="font-size:.82rem;margin:-6px 0 10px">控えは部屋が消えたあとも、トップの「記録を見る」から開けます。共用PCではオフにしてね。</p>
+        <div class="row"><button id="histSave">💾 結果を保存（ダウンロード）</button><button id="histReload">↻ 最新にする</button></div></div>
+      <div id="histList"></div>
+    </section>
     <section id="tabEdit" class="op-edit" hidden>
       <div class="card"><h3 id="edTitle">✏️ 新しい質問</h3><div id="ed">${qFields('ed', false)}</div>
         <div class="row"><button class="primary" id="edSave">保存する</button><button id="edNew">新しく書く</button></div></div>
@@ -910,7 +1042,8 @@ function operatorView(code) {
   /* --- タブ --- */
   $$('.op-tabs button').forEach(b => b.onclick = () => {
     $$('.op-tabs button').forEach(x => x.classList.toggle('on', x === b));
-    $('#tabRun').hidden = b.dataset.tab !== 'run'; $('#tabEdit').hidden = b.dataset.tab !== 'edit';
+    $('#tabRun').hidden = b.dataset.tab !== 'run'; $('#tabEdit').hidden = b.dataset.tab !== 'edit'; $('#tabHist').hidden = b.dataset.tab !== 'hist';
+    if (b.dataset.tab === 'hist') refreshHistory();
     stage.reset(); stage.update();
   });
 
@@ -994,8 +1127,8 @@ function operatorView(code) {
     if (options.length < 2) return toast('ボタンは2つ以上必要です');
     const st = cur();
     if (st.phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って次を出しますか？')) return;
-    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options };
-    const ok = await push({ phase: 'open', run: { ...run, duration: q.duration, reveal: q.reveal, showCount: q.showCount, qid: q.id || null } }, q.duration, run);
+    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options, settings: { type: q.type, duration: q.duration, reveal: q.reveal, showCount: q.showCount } };
+    const ok = await push({ phase: 'open', run: { id: run.id, question: run.question, options: run.options, duration: q.duration, reveal: q.reveal, showCount: q.showCount, qid: q.id || null } }, q.duration, run);
     if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
   }
   function closeNow() { const st = cur(); if (st.phase !== 'open') return; push({ ...st, phase: st.run.reveal === 'live' ? 'result' : 'closed' }); }
@@ -1008,6 +1141,45 @@ function operatorView(code) {
     if (st.phase === 'open' && st.ends_at && Clock.now() > st.ends_at + 400 && autoClosed !== st.run.id) { autoClosed = st.run.id; closeNow(); }
     if (w.room) { renderStatus(); stage.update(); }
   }, 250);
+
+  /* --- 履歴 --- */
+  let lastRec = null, histRev = null, histT = null, histBusy = false;
+  $('#bkOn').checked = backupOn();
+  $('#bkOn').onchange = e => {
+    store.set(BACKUP_ON_KEY, e.target.checked);
+    if (e.target.checked) { if (lastRec) saveBackup(lastRec); toast('控えを残すようにしました'); }
+    else if (store.get(BK_PREFIX + code) && confirm('このPCに残っている、この部屋の控えも消しますか？')) { delBackup(code); toast('控えを消しました'); }
+  };
+  async function refreshHistory() {
+    if (histBusy) return; histBusy = true;
+    const res = await API.exportAll(code, secret); histBusy = false;
+    if (!res.ok) return;
+    lastRec = makeRecord(res, code);
+    if (backupOn()) saveBackup(lastRec);
+    if (!$('#tabHist').hidden) renderHistory();
+  }
+  function renderHistory() {
+    if (!lastRec) return;
+    const st = cur(), nowId = st.run && st.phase !== 'waiting' ? st.run.id : null;
+    const rec = { ...lastRec, runs: lastRec.runs.slice().reverse() };
+    $('#histList').innerHTML = `<div class="card">${runsHtml(rec, run => `<button class="primary" data-show="${esc(run.run_id)}">🖥 結果をモニタに出す</button><button data-reask="${esc(run.run_id)}">🔁 もう一度出題</button>`, nowId)}</div>`;
+    $$('[data-show]', $('#histList')).forEach(b => b.onclick = () => showOnMonitor(lastRec.runs.find(r => r.run_id === b.dataset.show)));
+    $$('[data-reask]', $('#histList')).forEach(b => b.onclick = () => { const r = lastRec.runs.find(x => x.run_id === b.dataset.reask); if (r) ask(runToQuestion(r)); });
+  }
+  async function showOnMonitor(run) {
+    if (!run) return;
+    if (cur().phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って、この結果をモニタに出しますか？')) return;
+    const s = run.settings || {};
+    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, replay: true } })) toast('モニタに結果を出しました');
+  }
+  function histTick() {
+    const st = cur();
+    if (st.rev !== histRev) { histRev = st.rev; clearTimeout(histT); histT = setTimeout(refreshHistory, 700); }
+    else if (!$('#tabHist').hidden && st.phase === 'open' && Date.now() - (histTick.t || 0) > 3000) { histTick.t = Date.now(); refreshHistory(); }
+  }
+  setInterval(() => { if (w.room) histTick(); }, 1000);
+  $('#histReload').onclick = refreshHistory;
+  $('#histSave').onclick = () => $('#btnSave').click();
 
   /* --- サッと出題 --- */
   const quick = qForm('qk', $('#quick'));
@@ -1054,14 +1226,10 @@ function operatorView(code) {
   $('#bankImp').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try {
-      const data = JSON.parse(await f.text()); const list = Array.isArray(data) ? data : data.questions;
-      if (!Array.isArray(list)) throw 0;
-      const clean = list.filter(q => q && typeof q === 'object' && BTN_TYPES[q.type]).map(q => ({
-        id: 'q' + uid(8), text: String(q.text || '').slice(0, 200), type: q.type, count: Math.min(6, Math.max(2, q.count | 0 || 4)),
-        labels: (q.labels || []).slice(0, 6).map(s => String(s).slice(0, 24)), duration: DURATIONS.some(d => d[0] === +q.duration) ? +q.duration : 30,
-        reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false })).filter(q => buildOptions(q).length >= 2);
-      if (!clean.length) throw 0;
-      saveBank(loadBank().concat(clean)); renderBanks(); toast(`${clean.length}問 読みこみました`);
+      const data = JSON.parse(await f.text());
+      const list = Array.isArray(data) ? data : data.questions;
+      if (!Array.isArray(list) || !importQuestions(list)) throw 0;
+      renderBanks();
     } catch { toast('読みこめませんでした（このアプリで書き出したファイルを選んでね）'); }
   };
   resetEd(); renderBanks();
@@ -1091,22 +1259,19 @@ function operatorView(code) {
     $('#rmShow', m).onclick = () => { const q = qrDataUrl(remoteUrl); if (q) $('#rmQr', m).innerHTML = `<img src="${q}" alt="">`; else toast('QRコードを作れませんでした'); };
   };
   $('#btnSave').onclick = () => {
-    const m = openModal(`<h2>💾 結果を保存</h2><p>この部屋で出したアンケートの結果を、ぜんぶファイルに保存します。<br><small>部屋と結果は24時間で消えるので、残したいときは保存してね。</small></p>
-      <div class="row"><button class="primary" id="sCsv">CSV（エクセル用）</button><button id="sJson">JSON</button><button data-close>閉じる</button></div>`);
-    const get = async () => { const res = await API.exportAll(code, secret); if (!res.ok) { toast(errMsg(res.error)); return null; } if (!res.runs.length) { toast('まだ結果がありません'); return null; } return res; };
-    const d = new Date(), stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`;
-    $('#sJson', m).onclick = async () => { const r = await get(); if (r) { download(`アンケート結果_${code}_${stamp}.json`, JSON.stringify(r, null, 2), 'application/json'); m.remove(); } };
-    $('#sCsv', m).onclick = async () => {
-      const r = await get(); if (!r) return;
-      const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      const withNames = r.anon_mode !== 'full';
-      const rows = [['番号', '質問', '開始時刻', '選択肢', '人数', '割合(%)', '回答者数'].concat(withNames ? ['名前'] : [])];
-      r.runs.forEach((x, k) => x.options.forEach((o, i) => rows.push([k + 1, x.question, fmtTime(x.started_at), o, x.counts[i], x.total ? Math.round(x.counts[i] * 1000 / x.total) / 10 : 0, x.total].concat(withNames ? [(x.names && x.names[i] || []).join('、')] : []))));
-      download(`アンケート結果_${code}_${stamp}.csv`, '﻿' + rows.map(rw => rw.map(cell).join(',')).join('\r\n'), 'text/csv'); m.remove();
+    const m = openModal(`<h2>💾 結果を保存</h2><p>この部屋で出したアンケートの質問・設定・結果を、ぜんぶファイルに保存します。<br><small>部屋と結果はサーバーから24時間で消えます。<b>記録ファイル（JSON）</b>は、あとでトップの「記録を見る」から開けます。</small></p>
+      <div class="row"><button class="primary" id="sJson">記録ファイル（JSON）</button><button id="sCsv">CSV（エクセル用）</button><button data-close>閉じる</button></div>`);
+    const get = async () => {
+      const res = await API.exportAll(code, secret); if (!res.ok) { toast(errMsg(res.error)); return null; }
+      const rec = makeRecord(res, code); lastRec = rec; if (backupOn()) saveBackup(rec);
+      if (!rec.runs.length) { toast('まだ結果がありません'); return null; } return rec;
     };
+    $('#sJson', m).onclick = async () => { const r = await get(); if (r) { download(recName(r, 'json'), JSON.stringify(r, null, 2), 'application/json'); m.remove(); } };
+    $('#sCsv', m).onclick = async () => { const r = await get(); if (r) { download(recName(r, 'csv'), recordCsv(r), 'text/csv'); m.remove(); } };
   };
   $('#btnEnd').onclick = async () => {
-    if (!confirm('部屋を終了しますか？\n参加者は入れなくなり、結果も消えます。\n（先に「結果を保存」しておくと安心です）')) return;
+    if (backupOn()) await refreshHistory();
+    if (!confirm('部屋を終了しますか？\n参加者は入れなくなり、サーバーの結果も消えます。\n' + (backupOn() && lastRec && lastRec.runs.length ? '（このPCのブラウザには控えが残ります）' : '（先に「結果を保存」しておくと安心です）'))) return;
     const res = await API.closeRoom(code, secret);
     if (!res.ok) return toast(errMsg(res.error));
     API.ping(code); dropMyRoom(code); location.href = pageUrl();
