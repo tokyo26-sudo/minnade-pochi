@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.3</title>
+<title>みんなでポチッ v0.4</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -241,8 +241,8 @@ body.v-op{background:#eef0f5}
    ここに Supabase の情報を入れると本番モード。空なら「おためしモード」。
    ========================================================= */
 const CONFIG = {
-  SUPABASE_URL: '',       // 例: 'https://abcdefgh.supabase.co'
-  SUPABASE_ANON_KEY: '',  // Supabase の anon public key
+  SUPABASE_URL: 'https://acytuhewfhuoxugwmbat.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_ruAGcA3YSvXXCPkc3s6aTQ_4lg3wAYJ',  // 公開してOKな鍵（publishable）
 };
 
 const Q = new URLSearchParams(location.search);
@@ -494,7 +494,7 @@ function landingView() {
   const rooms = myRooms();
   $('#app').innerHTML = `<div class="land">
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.3</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.4</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -818,7 +818,7 @@ function participantView(code) {
   }
 
   API.subscribe(code, refresh);
-  setInterval(refresh, DEMO ? 4000 : 10000);
+  setInterval(refresh, DEMO ? 4000 : 5000);
   setInterval(() => { if (!pub || pub.gone || !joined) return; const st = pub.state || {};
     if (st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at) render(); else tick(); }, 250);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
