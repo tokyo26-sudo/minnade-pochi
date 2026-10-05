@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.8</title>
+<title>みんなでポチッ v0.9</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -150,7 +150,8 @@ body.v-disp.idle{cursor:none}
 .col-label{background:var(--c);text-align:center;font-weight:900;font-size:min(3.8cqw,6cqh);padding:1.2cqh .6cqw;border-radius:1.6cqh;margin-top:1.4cqh;word-break:break-word;line-height:1.15}
 .col-track{border-bottom:.5cqh solid rgba(255,255,255,.35)}
 .col.win .col-top{color:#ffd54a}
-.col.win .col-top::before{content:"👑";display:block;font-size:.42em;margin-bottom:.2em}
+.col-top{position:relative;padding-top:.62em}
+.col.win .col-top::before{content:"👑";position:absolute;top:0;left:0;right:0;font-size:.42em;line-height:1.2}
 .col.win .col-fill{box-shadow:0 0 3cqh rgba(255,213,74,.55)}
 .col-names{font-size:2cqh;opacity:.85;margin-top:1cqh;line-height:1.35;height:8.4cqh;overflow:hidden;text-align:center;word-break:break-all}
 .st-big{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqh;text-align:center}
@@ -205,6 +206,24 @@ body.v-op{background:#eef0f5}
 .sharebox img{width:132px;height:132px;image-rendering:pixelated;border:6px solid #fff;outline:1px solid var(--line);border-radius:6px}
 .sharebox .u{font-size:.8rem;word-break:break-all;background:#f4f5f9;border-radius:8px;padding:6px 8px;margin:6px 0}
 .op-hist{max-width:980px}
+.help{font-size:.92rem;line-height:1.7}
+.help h2{margin:0 0 6px}
+.help h3{font-size:1.02rem;margin:18px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
+.help h4{font-size:.95rem;margin:12px 0 2px}
+.help ul,.help ol{margin:4px 0 6px;padding-left:1.4em}
+.help p{margin:4px 0}
+.help .note{font-size:.84rem;color:var(--sub)}
+.help .credit{font-size:.78rem;color:var(--sub);margin-top:18px;padding-top:10px;border-top:1px solid var(--line)}
+.modal>div.wide{max-width:780px}
+.helpbtn{position:absolute;top:36px;right:16px}
+.land{position:relative}
+.p-help{text-align:center;margin:14px 0 0;font-size:.88rem}
+.p-help a{color:var(--sub);font-weight:700}
+.sfx-lock{position:fixed;left:16px;bottom:16px;z-index:6;background:rgba(0,0,0,.65);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer}
+@keyframes drum{0%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.08)}100%{transform:rotate(-8deg) scale(1)}}
+.st-big b.drum{animation:drum .18s infinite;color:#fff}
+.vol{display:flex;align-items:center;gap:10px;margin:-4px 0 12px 28px}
+.vol input{flex:1;accent-color:var(--brand)}
 img[data-img]:not([src]){visibility:hidden}
 /* stage images */
 .st-qrow{display:flex;gap:2.6cqw;align-items:center;margin:0 0 2.2cqh}
@@ -493,6 +512,187 @@ const imgFieldsOf = q => ({ img: IMG_ID_RE.test(q.img || '') ? q.img : null, opt
 function zoomImg(id) { const d = IMG.get(id); if (d) openModal(`<img class="zoomimg" src="${d}" alt="" data-close><div class="row" style="justify-content:flex-end;margin-top:10px"><button data-close>閉じる</button></div>`); }
 
 /* =========================================================
+   効果音（sounds/ のファイルを鳴らす。なければ手作りの音で代わりに鳴らす）
+   効果音素材：効果音ラボ https://soundeffect-lab.info/
+   ========================================================= */
+const SFX_ON_KEY = 'evapp_sfx_on', SFX_VOL_KEY = 'evapp_sfx_vol', NOROLL_KEY = 'evapp_noroll';
+const ROLL_MS = 4600;
+const SFX = (() => {
+  const FILES = { shutsudai: 'sounds/shutsudai.mp3', timer: 'sounds/timer.mp3', timer_fast: 'sounds/timer_fast.mp3', gong: 'sounds/gong.mp3',
+    roll: 'sounds/roll.mp3', roll_end: 'sounds/roll_end.mp3', seikai: 'sounds/seikai.mp3', fuseikai: 'sounds/fuseikai.mp3' };
+  const LOOP_LEN = { timer: 5.6, timer_fast: 1.6 };
+  let ctx = null, master = null, loading = null, loopNode = null;
+  const bufs = {}, shots = {};
+  const enabled = () => store.get(SFX_ON_KEY, true) !== false;
+  const volume = () => { const v = Number(store.get(SFX_VOL_KEY, 0.8)); return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.8; };
+  function ensure() {
+    if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; try { ctx = new AC(); } catch { return null; } master = ctx.createGain(); master.connect(ctx.destination); }
+    master.gain.value = volume() ** 1.5; return ctx;
+  }
+  function preload() {
+    if (loading) return loading; if (!ensure()) return Promise.resolve();
+    loading = Promise.all(Object.entries(FILES).map(async ([k, u]) => {
+      try { const r = await fetch(u); if (!r.ok) throw 0; const ab = await r.arrayBuffer(); bufs[k] = await new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)); } catch {}
+    }));
+    return loading;
+  }
+  function unlock() { if (!ensure()) return; if (ctx.state !== 'running') ctx.resume().catch(() => {}); preload(); }
+  const running = () => !!ctx && ctx.state === 'running';
+  function onsetOf(b) {
+    const d = b.getChannelData(0); let m = 0; for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > m) m = a; }
+    for (let i = 0; i < d.length; i++) if (Math.abs(d[i]) > m * 0.2) return Math.max(0, i / b.sampleRate - 0.003);
+    return 0;
+  }
+  // ---- 予備の手作り音 ----
+  function tone(t, f, dur, { type = 'sine', gain = 0.3, attack = 0.005, out = master, detune = 0 } = {}) {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f; o.detune.value = detune;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(t, dur, { gain = 0.2, freq = 3000, q = 0.8, type = 'bandpass' } = {}) {
+    const len = Math.ceil(ctx.sampleRate * dur), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = buf; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f).connect(g).connect(master); src.start(t); src.stop(t + dur + 0.02);
+  }
+  function bell(t, base, dur, gain) { [[1, 1], [2.76, 0.55], [5.4, 0.3], [8.9, 0.15]].forEach(([m, a]) => tone(t, base * m, dur / (1 + m * 0.25), { gain: gain * a, attack: 0.002 })); noise(t, 0.03, { gain: gain * 0.5, freq: base * 4, q: 2 }); }
+  const SYN = {
+    shutsudai(t) { bell(t, 659, 1.0, 0.32); bell(t + 0.32, 523, 1.4, 0.32); },
+    gong(t) { for (let i = 0; i < 6; i++) bell(t + i * 0.14, 820 + (i % 2) * 40, 0.5, 0.33); },
+    roll(t) { for (let i = 0; i < 56; i++) noise(t + i * 0.08, 0.09, { gain: 0.06 + (i / 56) * 0.2, freq: 1800, q: 0.7 }); },
+    roll_end(t) {
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; lp.connect(master);
+      [261.6, 329.6, 392, 523.3].forEach(f => tone(t, f, 1.8, { type: 'sawtooth', gain: 0.09, out: lp, attack: 0.01 }));
+      noise(t, 1.4, { gain: 0.16, freq: 7000, q: 0.5, type: 'highpass' }); tone(t, 65.4, 1.2, { gain: 0.4 });
+    },
+    seikai(t) { [0, 0.42].forEach(o => { bell(t + o, 988, 0.5, 0.3); bell(t + o + 0.16, 784, 0.7, 0.3); }); },
+    fuseikai(t) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.connect(master); tone(t, 140, 0.9, { type: 'sawtooth', gain: 0.35, out: lp, attack: 0.01 }); },
+    tick(t, fast) { tone(t, fast ? 1400 : 1100, 0.05, { type: 'square', gain: 0.08 }); },
+  };
+  const LOG = /[?&]sfxlog/.test(location.search) ? (window.__sfxLog = []) : null;
+  const log = (a, n, src) => { if (LOG) LOG.push([Math.round(performance.now()), a, n, src]); };
+  function play(name) {
+    if (!enabled() || !ensure() || ctx.state !== 'running') return;
+    log('play', name, bufs[name] ? 'file' : 'synth');
+    master.gain.value = volume() ** 1.5;
+    const b = bufs[name];
+    if (b) {
+      const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = b; src.connect(g).connect(master); src.start();
+      shots[name] = { src, g }; src.onended = () => { if (shots[name] && shots[name].src === src) delete shots[name]; };
+    } else if (SYN[name]) SYN[name](ctx.currentTime + 0.02);
+  }
+  function stop(name) { const o = shots[name]; if (!o || !ctx) return; try { o.g.gain.setTargetAtTime(0, ctx.currentTime, 0.05); o.src.stop(ctx.currentTime + 0.3); } catch {} delete shots[name]; }
+  function stopLoop() {
+    if (!loopNode) return; log('stopLoop', loopNode.name);
+    if (loopNode.iv) clearInterval(loopNode.iv);
+    else { try { loopNode.g.gain.setTargetAtTime(0, ctx.currentTime, 0.03); loopNode.src.stop(ctx.currentTime + 0.2); } catch {} }
+    loopNode = null;
+  }
+  function loop(name) {
+    stopLoop(); if (!enabled() || !ensure() || ctx.state !== 'running') return;
+    master.gain.value = volume() ** 1.5; log('loop', name, bufs[name] ? 'file' : 'synth');
+    const b = bufs[name];
+    if (b) {
+      const st = onsetOf(b), src = ctx.createBufferSource(), g = ctx.createGain();
+      src.buffer = b; src.loop = true; src.loopStart = st; src.loopEnd = Math.min(b.duration, st + (LOOP_LEN[name] || b.duration));
+      src.connect(g).connect(master); src.start(ctx.currentTime, st); loopNode = { src, g, name };
+    } else {
+      const fast = name === 'timer_fast', per = fast ? 0.2 : 0.4; let t = ctx.currentTime + 0.02;
+      const iv = setInterval(() => { while (t < ctx.currentTime + 0.4) { SYN.tick(t, fast); t += per; } }, 100); loopNode = { iv, name };
+    }
+  }
+  function refresh() { if (master) master.gain.value = volume() ** 1.5; if (!enabled()) { stopLoop(); Object.keys(shots).forEach(stop); } }
+  return { preload, unlock, running, play, stop, loop, stopLoop, refresh, enabled, volume, looping: () => !!loopNode };
+})();
+window.addEventListener('storage', e => { if (e.key === SFX_ON_KEY || e.key === SFX_VOL_KEY) SFX.refresh(); });
+
+/* =========================================================
+   使い方
+   ========================================================= */
+const HELP_PART = `
+  <ol>
+    <li>モニタのQRコードをスマホのカメラで読みます</li>
+    <li>名前（ニックネームでOK）と、モニタに出ているカギの数字（4ケタ）を入れます</li>
+    <li>質問が出たら、ボタンを押して回答します。締め切りまでは何度でも変えられます</li>
+    <li>画面の上に、名前のあつかい（完全匿名・匿名・記名）が表示されています</li>
+  </ol>`;
+const HELP_MASTER = `<div class="help">
+  <h2>📖 みんなでポチッ　使い方</h2>
+  <p>会場のみんなが、手元のスマホで投票できるアンケートアプリです。QRコードを読むだけで参加でき、結果はモニタにリアルタイムで表示されます。</p>
+  <h3>3つの画面</h3>
+  <ul>
+    <li><b>操作画面</b>（マスター）… 出題・締め切り・結果発表をする画面。PCでもスマホでも使えます</li>
+    <li><b>モニタ画面</b> … 会場のモニタに映す画面。QRコード・質問・グラフが大きく出ます。効果音もここから鳴ります</li>
+    <li><b>参加者画面</b> … 参加する人のスマホ。ボタンを押して回答します</li>
+  </ul>
+  <h3>はじめての準備（マスター）</h3>
+  <h4>1. 部屋をつくる</h4>
+  <p>トップで部屋の名前と「名前のあつかい」を選び、「部屋をつくる」を押します。</p>
+  <ul>
+    <li>🔒 完全匿名：だれが何を選んだか、マスターにもわかりません</li>
+    <li>👤 匿名：名前はマスターだけが見られます</li>
+    <li>📢 記名：選んだ人の名前がモニタに出ます</li>
+  </ul>
+  <p class="note">※名前のあつかいは、部屋をつくったあとは変えられません。部屋の名前は、操作画面の上の ✏️ であとから変えられます。<br>※「このPCで覚える」に印を付けると、次からパスワードの入力がいりません（共用PCでは外してください）。</p>
+  <h4>2. モニタに映す</h4>
+  <p>PCとモニタを「拡張」でつなぎ（Windows：Win＋P → 拡張／Mac：ミラーリングをオフ）、「🖥 表示用ウィンドウを開く」を押します。開いたウィンドウをモニタ側へ動かし、ダブルクリック（またはFキー）で全画面にします。</p>
+  <p class="note">🔊 効果音を鳴らすには、表示用ウィンドウを一度クリックしてください（ブラウザの決まりで、さわるまで音が出せません）。左下に「音をオンにする」が出ているときは、まだ音が出ない状態です。</p>
+  <h4>3. 参加してもらう</h4>
+  <p>モニタに出ているQRコードをスマホで読み、名前とカギの数字（4ケタ）を入れると参加できます。途中からの参加もOKです。</p>
+  <h3>アンケートを出す</h3>
+  <ul>
+    <li><b>⚡ サッと出題</b>：その場で質問文とボタンを決めて、すぐ出せます</li>
+    <li><b>📋 この部屋の質問</b>：用意しておいた質問を、好きな順番で出せます</li>
+    <li>制限時間がくると自動で締め切ります。「⏹ 締め切る」で途中でも締め切れます</li>
+    <li>「あとで発表」の質問は、「🎉 結果発表！」を押すとドラムロールのあとモニタに結果が出ます。「ロールなしで発表」に印を付けると、すぐ出ます</li>
+    <li>「📱 スマホに結果」をオンにすると、参加者のスマホにもグラフが出ます（名前は出ません）</li>
+  </ul>
+  <h3>効果音</h3>
+  <ul>
+    <li>出題 → ピンポン／制限時間のあいだ → タイマー（残り10秒で速くなる）／時間ゼロ・締め切り → ゴング／結果発表 → ドラムロール → ジャン！</li>
+    <li>「投票中も見せる」の質問は、締め切りのゴングだけ鳴ります</li>
+    <li>⚙️ 設定で、効果音のオン・オフと音量を変えられます（そのPCに覚えます）</li>
+  </ul>
+  <h3>質問を前もって用意する</h3>
+  <p>「✏️ 質問をつくる」タブで質問を作れます。</p>
+  <ul>
+    <li>ボタンの文字は「はい／いいえ」「A・B・C…」のほか、自由に決められます（最大6択）</li>
+    <li>🖼 質問や選択肢に画像を付けられます。画像は自動で軽くなります</li>
+    <li>「📤 ファイルに書き出す」で質問セットを保存できます</li>
+  </ul>
+  <h4>前日に準備して、当日使うには</h4>
+  <p>前日：練習用の部屋で質問を作り、ファイルに書き出す<br>当日：トップの「📂 ファイルから読みこむ」で質問セットを選んでから部屋をつくる<br>→ 部屋の名前・名前のあつかい・質問（画像も）が入った部屋ができます</p>
+  <p class="note">※部屋は24時間で消えるので、当日につくるのがおすすめです。</p>
+  <h3>スマホをリモコンにする</h3>
+  <p>「🔗 URL・QR」の「リモコン用」のQRをスマホで読むと、スマホで操作できます。モニタ側のPCでは「表示用」のURLを開いておきます。</p>
+  <p class="note">⚠ 表示用・リモコン用のURLは、観客に見せないでください。</p>
+  <h3>記録を残す</h3>
+  <ul>
+    <li>「📜 履歴」タブで、出した質問と結果をふり返れます。「🖥 結果をモニタに出す」で、さっきの結果をもう一度映せます</li>
+    <li>「💾 結果を保存」で、記録ファイル（JSON）やCSVをダウンロードできます</li>
+    <li>記録ファイルは、トップの「📂 記録を見る」で、あとからいつでも開けます</li>
+    <li>部屋と結果は <b>24時間で自動的に消えます</b>。「部屋を終了」を押すと、その場で消えます。残したいときは、先に保存してください</li>
+  </ul>
+  <h3>こまったとき</h3>
+  <ul>
+    <li><b>知らない人がまぎれこんだ</b> → 上の「↻ 作り直す」でカギの数字を変えます（新しく入る人だけに効きます）</li>
+    <li><b>参加できない</b> → カギの数字が合っているか、電波があるかを確認してください</li>
+    <li><b>画面が変わらない</b> → ページを再読みこみしてください</li>
+    <li><b>音が出ない</b> → 表示用ウィンドウを一度クリック。⚙️ 設定で効果音がオンか、PCの音量も確認してください</li>
+    <li><b>パスワードがちがうと言われる</b> → ⚙️ 設定、またはトップで保存したパスワードを忘れさせて、入れ直してください</li>
+  </ul>
+  <h3>参加する人へ</h3>
+  ${HELP_PART}
+  <p class="credit">効果音：<a href="https://soundeffect-lab.info/" target="_blank" rel="noopener">効果音ラボ</a></p>
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="primary" data-close>閉じる</button></div>
+</div>`;
+function showHelp(partOnly) {
+  const m = openModal(partOnly ? `<div class="help"><h2>❓ 参加のしかた</h2>${HELP_PART}<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="primary" data-close>閉じる</button></div></div>` : HELP_MASTER);
+  m.firstElementChild.classList.add('wide');
+}
+
+/* =========================================================
    サーバーとのやりとり
    おためし版（このブラウザの中だけ）と Supabase 版で同じ形にしてある
    ========================================================= */
@@ -549,6 +749,10 @@ function makeLocalServer() {
       for (const k of Object.keys(r.participants)) if (k.startsWith('bot-')) { delete r.participants[k]; n++; }
       for (const v of Object.values(r.votes)) for (const k of Object.keys(v)) if (k.startsWith('bot-') || k.startsWith('vtbot-')) delete v[k];
       save(db); return ok({ removed: n });
+    },
+    async setTitle(code, secret, title) {
+      const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
+      r.title = String(title || '').trim().slice(0, 60); save(db); return ok({ title: r.title });
     },
     async putImage(code, secret, id, data) {
       if (!auth(load(), code, secret)) return ng('no_room');
@@ -619,6 +823,7 @@ async function makeSupaServer() {
     results: (c, s, run) => rpc('ev_results', { p_code: c, p_secret: s, p_run_id: run }),
     exportAll: (c, s) => rpc('ev_export', { p_code: c, p_secret: s }),
     closeRoom: (c, s) => rpc('ev_close_room', { p_code: c, p_secret: s }),
+    setTitle: (c, s, t) => rpc('ev_set_title', { p_code: c, p_secret: s, p_title: t }),
     putImage: (c, s, id, data) => rpc('ev_put_image', { p_code: c, p_secret: s, p_id: id, p_data: data }),
     getImage: (c, id) => rpc('ev_get_image', { p_code: c, p_id: id }),
     removeBots: (c, s) => rpc('ev_remove_bots', { p_code: c, p_secret: s }),
@@ -652,8 +857,9 @@ function landingView(prefill) {
   document.body.className = 'v-land';
   const rooms = myRooms();
   $('#app').innerHTML = `<div class="land">
+    <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.8</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.9</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -707,6 +913,7 @@ function landingView(prefill) {
   };
   $$('[data-bk]').forEach(b => b.onclick = () => { if (!b.dataset.bk.startsWith('evapp_bk_')) return; const r = parseRecord(store.get(b.dataset.bk)); if (r) recordView(r, true); else toast('控えを開けませんでした'); });
   $$('[data-bkdel]').forEach(b => b.onclick = () => { if (!b.dataset.bkdel.startsWith('evapp_bk_')) return; if (confirm('この控えを削除しますか？（もとに戻せません）')) { store.del(b.dataset.bkdel); landingView(); } });
+  $('#lHelp').onclick = () => showHelp(false);
   $('#lJoin').onclick = () => { const c = $('#lCode').value.trim().toUpperCase(); if (c) location.href = pageUrl({ r: c }); };
   $('#lCode').onkeydown = e => { if (e.key === 'Enter') $('#lJoin').click(); };
   $('#lCreate').onclick = async () => {
@@ -780,7 +987,8 @@ function makeStage(el, getW, joinUrl) {
   function screenOf(st) {
     if (!st || st.phase === 'waiting' || !st.run) return 'waiting';
     if (st.phase === 'open') return st.ends_at && Clock.now() >= st.ends_at ? 'closing' : 'open';
-    return st.phase === 'result' ? 'result' : 'closed';
+    if (st.phase === 'result') return st.reveal_at && Clock.now() < st.reveal_at ? 'rolling' : 'result';
+    return 'closed';
   }
   function foot(room, run) {
     return `<div class="st-foot"><span>${run && run.showCount ? `回答 <b data-tot>0</b> / <b data-pc>0</b>人` : ''}</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}</span></div>`;
@@ -819,6 +1027,7 @@ function makeStage(el, getW, joinUrl) {
       : `<div class="st-q" data-fit>${esc(run.question)}</div>`;
     const live = run.reveal === 'live';
     if (screen === 'open' || (screen === 'closing' && live)) return `<div class="st">${q}${timer()}${live ? cols(run, false) : tiles(run)}${foot(room, run)}</div>`;
+    if (screen === 'rolling') return `<div class="st">${q}<div class="st-big"><b class="drum">🥁</b><span>結果発表…！</span></div>${foot(room, run)}</div>`;
     if (screen === 'closing' || screen === 'closed') return `<div class="st">${q}<div class="st-big"><b>締め切り！</b><span>${screen === 'closed' ? '結果発表をお待ちください…' : '集計中…'}</span></div>${foot(room, run)}</div>`;
     return `<div class="st"><div class="st-q small" data-fit>${esc(run.question)}</div>${cols(run, room.anon_mode === 'named')}${foot(room, run)}</div>`;
   }
@@ -889,8 +1098,40 @@ function displayView(code) {
   const el = document.createElement('div'); $('#app').appendChild(el);
   let w = null;
   const stage = makeStage(el, () => w, pageUrl({ r: code }));
-  w = makeWatcher(code, secret, () => stage.update());
-  setInterval(() => stage.update(), 250);
+  w = makeWatcher(code, secret, () => { stage.update(); soundTick(); });
+  // ---- 効果音 ----
+  SFX.preload();
+  const lock = document.createElement('button'); lock.className = 'sfx-lock'; lock.textContent = '🔇 クリックして音をオンにする'; lock.hidden = true; document.body.appendChild(lock);
+  const unlock = () => { SFX.unlock(); setTimeout(updLock, 300); };
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlock, { passive: true }));
+  function updLock() { lock.hidden = !SFX.enabled() || SFX.running(); }
+  const sd = { inited: false, runId: null, phase: null, loop: null, gongRun: null, rollKey: null, endKey: null };
+  function soundTick() {
+    if (!w || !w.room) return;
+    const st = w.room.state || {}, run = st.run, now = Clock.now();
+    if (!sd.inited) {
+      sd.inited = true; sd.runId = run ? run.id : null; sd.phase = st.phase;
+      sd.gongRun = st.phase === 'open' ? null : (run ? run.id : null); sd.rollKey = sd.endKey = st.rk || null;
+    }
+    let want = null;
+    if (st.phase === 'open' && run) {
+      if (run.id !== sd.runId) { sd.runId = run.id; sd.gongRun = null; SFX.play('shutsudai'); }
+      if (st.ends_at) {
+        const rem = st.ends_at - now;
+        if (rem > 10000) want = 'timer'; else if (rem > 0) want = 'timer_fast';
+        else if (sd.gongRun !== run.id) { sd.gongRun = run.id; SFX.stopLoop(); sd.loop = null; SFX.play('gong'); }
+      }
+    }
+    if ((st.phase === 'closed' || st.phase === 'result') && run && sd.phase === 'open' && run.id === sd.runId && sd.gongRun !== run.id) { sd.gongRun = run.id; SFX.play('gong'); }
+    if (!SFX.enabled()) want = null;
+    if (want !== sd.loop || (want && !SFX.looping() && SFX.running())) { sd.loop = want; if (want) SFX.loop(want); else SFX.stopLoop(); }
+    if (st.phase === 'result' && run && st.rk) {
+      if (st.rk !== sd.rollKey) { sd.rollKey = st.rk; if (st.reveal_at && now < st.reveal_at) SFX.play('roll'); }
+      if (st.rk !== sd.endKey && (!st.reveal_at || now >= st.reveal_at)) { sd.endKey = st.rk; SFX.stop('roll'); SFX.play('roll_end'); }
+    }
+    sd.phase = st.phase;
+  }
+  setInterval(() => { stage.update(); soundTick(); updLock(); }, 250);
   document.addEventListener('qrready', () => { stage.reset(); stage.update(); });
   // 全画面とカーソル
   const hint = document.createElement('div'); hint.className = 'st-hint'; hint.textContent = 'ダブルクリック（または F キー）で全画面'; document.body.appendChild(hint);
@@ -940,13 +1181,14 @@ function participantView(code) {
     const expired = st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at;
     const screen = !run || st.phase === 'waiting' ? 'waiting' : st.phase === 'open' && !expired ? 'open' : 'closed';
     const my = run ? myVotes[run.id] : undefined;
-    const k = [screen, st.rev, my, st.phase, pub.results ? JSON.stringify(pub.results.counts) + pub.results.total : ''].join('|');
+    const rolling = st.phase === 'result' && st.reveal_at && Clock.now() < st.reveal_at;
+    const k = [screen, st.rev, my, st.phase, rolling, pub.title, pub.results ? JSON.stringify(pub.results.counts) + pub.results.total : ''].join('|');
     if (k === key) return tick();
     key = k;
     if (screen === 'open' && run.id !== lastRun) { lastRun = run.id; try { navigator.vibrate && navigator.vibrate(60); } catch {} window.scrollTo(0, 0); }
     let main;
     if (screen === 'waiting') {
-      main = `<div class="p-main p-center"><div class="big">🙌</div><h2>参加できました！</h2><p>アンケートが始まるまで、少々お待ちください</p><p style="margin-top:18px"><span class="dots"><i></i><i></i><i></i></span></p></div>`;
+      main = `<div class="p-main p-center"><div class="big">🙌</div><h2>参加できました！</h2><p>アンケートが始まるまで、少々お待ちください</p><p style="margin-top:18px"><span class="dots"><i></i><i></i><i></i></span></p><p class="p-help"><a href="#" data-phelp>❓ 参加のしかた</a></p></div>`;
     } else if (screen === 'open') {
       const n = run.options.length, has = my !== undefined, showImg = run.phoneImg !== false, optI = showImg && hasOptImgs(run);
       main = `<div class="p-main">
@@ -958,6 +1200,8 @@ function participantView(code) {
           : `<button class="opt ${my === i ? 'sel' : ''}" data-i="${i}" style="--c:${colorOf(i)}">${esc(o)}</button>`).join('')}</div>
         <div class="p-note ${has ? 'done' : ''}">${has ? '✓ 回答しました。締め切りまで変えられます' : 'ボタンをタップして回答してください'}</div>
       </div>`;
+    } else if (rolling) {
+      main = `<div class="p-main p-center"><div class="big" style="animation:drum .18s infinite">🥁</div><h2>結果発表…！</h2><p>${esc(run.question)}</p><p style="margin-top:20px">モニタに注目！</p></div>`;
     } else if (st.phase === 'result' && pub.results && Array.isArray(pub.results.counts)) {
       const c = pub.results.counts, tot = pub.results.total || 0, max = Math.max(1, ...c), top = Math.max(0, ...c);
       main = `<div class="p-main"><div style="text-align:center;font-size:2rem">🎉</div><div class="p-q">${esc(run.question)}</div>
@@ -974,6 +1218,7 @@ function participantView(code) {
     app.innerHTML = `<div class="p-wrap">${head()}${main}</div>`;
     $$('.opt', app).forEach(b => b.onclick = e => { const z = e.target.closest('[data-zoom]'); if (z) { e.stopPropagation(); zoomImg(z.dataset.zoom); return; } choose(+b.dataset.i); });
     $$('.p-qimg [data-zoom]', app).forEach(z => z.onclick = () => zoomImg(z.dataset.zoom));
+    $$('[data-phelp]', app).forEach(a => a.onclick = e => { e.preventDefault(); showHelp(true); });
     hydrateImgs(app);
     tick();
   }
@@ -1008,7 +1253,9 @@ function participantView(code) {
         <label class="f"><span>カギの数字（モニタに出ている4ケタ）</span><input id="jPin" class="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000"></label>
         <div class="p-err" id="jErr"></div>
         <button class="primary big" id="jGo" style="width:100%">参加する</button>
+        <p class="p-help"><a href="#" id="jHelp">❓ 参加のしかた</a></p>
       </div></div>`;
+    $('#jHelp').onclick = e => { e.preventDefault(); showHelp(true); };
     const last = store.get('evapp_lastname'); if (last) $('#jName').value = last;
     const go = async () => {
       const name = $('#jName').value.trim(), pin = $('#jPin').value.replace(/\D/g, '');
@@ -1028,7 +1275,7 @@ function participantView(code) {
   API.subscribe(code, refresh);
   setInterval(refresh, DEMO ? 4000 : 5000);
   setInterval(() => { if (!pub || pub.gone || !joined) return; const st = pub.state || {};
-    if (st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at) render(); else tick(); }, 250);
+    if ((st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at) || (st.phase === 'result' && st.reveal_at)) render(); else tick(); }, 250);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
   window.addEventListener('online', refresh);
   refresh();
@@ -1269,7 +1516,7 @@ function operatorView(code) {
   <header class="op-head">
     <div class="op-brand">みんなで<span>ポチッ</span>${DEMO ? '<span class="demo-tag">おためし</span>' : ''}</div>
     <div class="op-room">
-      <div class="op-kv"><label>部屋</label><b id="hTitle">…</b></div>
+      <div class="op-kv"><label>部屋</label><b id="hTitle">…</b><button class="mini" id="btnTitle" title="部屋の名前を変える">✏️</button></div>
       <div class="op-kv"><label>コード</label><b>${esc(code)}</b></div>
       <div class="op-kv"><label>カギ</label><b id="hPin">----</b><button class="mini" id="btnPin" title="カギの数字を作り直す">↻ 作り直す</button></div>
       <div class="op-kv"><label>参加</label><b id="hCount">0</b>人</div>
@@ -1280,6 +1527,7 @@ function operatorView(code) {
       <button id="btnShare">🔗 URL・QR</button>
       <button id="btnSave">💾 結果を保存</button>
       <button id="btnSet">⚙️ 設定</button>
+      <button id="btnHelp">📖 使い方</button>
       <button class="danger" id="btnEnd">部屋を終了</button>
     </div>
   </header>
@@ -1347,18 +1595,21 @@ function operatorView(code) {
   function renderStatus() {
     const st = cur(), run = st.run;
     const expired = st.phase === 'open' && st.ends_at && Clock.now() >= st.ends_at;
-    const k = [st.rev, st.phase, expired].join('|');
+    const rolling = st.phase === 'result' && st.reveal_at && Clock.now() < st.reveal_at;
+    const k = [st.rev, st.phase, expired, rolling].join('|');
     if (k === statusKey) return tickStatus();
     statusKey = k;
     const P = { waiting: ['待機中（参加受付中）', ''], open: ['回答受付中', 'open'], closed: ['締め切り（結果はまだ非公開）', 'closed'], result: ['結果発表中', 'result'] }[st.phase] || ['待機中', ''];
-    let h = `<div class="phase ${P[1]}"><span class="dot"></span>${P[0]}</div>`;
+    let h = `<div class="phase ${P[1]}"><span class="dot"></span>${rolling ? '🥁 ドラムロール中…' : P[0]}</div>`;
     if (run && st.phase !== 'waiting') h += `<div class="op-q">Q. ${esc(run.question)}</div>`;
     if (st.phase === 'open') {
       h += `<div class="op-timer" id="opTimer"></div>
         <div class="ctl"><button class="primary big" id="cClose">⏹ 締め切る</button><button id="cWait">待機画面にもどす</button></div>
         <div class="toggles"><button id="tCount" class="${run.showCount ? 'on' : ''}">回答人数：${run.showCount ? 'モニタに表示中' : 'かくし中'}</button><button id="tReveal" class="${run.reveal === 'live' ? 'on' : ''}">結果：${run.reveal === 'live' ? '投票中も見せる' : 'あとで発表'}</button>${phoneBtn(run)}</div>`;
     } else if (st.phase === 'closed') {
-      h += `<div class="ctl"><button class="primary big" id="cReveal">🎉 結果発表！</button><button id="cWait">待機画面にもどす</button></div><div class="toggles">${phoneBtn(run)}</div>`;
+      h += `<div class="ctl"><button class="primary big" id="cReveal">🎉 結果発表！</button><button id="cWait">待機画面にもどす</button></div>
+        <label class="chk" style="margin:10px 0 0"><input type="checkbox" id="cNoRoll" ${store.get(NOROLL_KEY, false) === true ? 'checked' : ''}> ロールなしで発表（ドラムロールをとばして、すぐ結果を出す）</label>
+        <div class="toggles">${phoneBtn(run)}</div>`;
     } else if (st.phase === 'result') {
       h += `<div class="ctl"><button class="primary big" id="cWait">待機画面にもどす</button><button id="cAgain">同じ質問をもう一度</button></div><div class="toggles">${phoneBtn(run)}</div>`;
     } else {
@@ -1367,6 +1618,7 @@ function operatorView(code) {
     $('#status').innerHTML = h;
     const on = (id, f) => { const b = $('#' + id); if (b) b.onclick = f; };
     on('cClose', closeNow); on('cWait', backToWait); on('cReveal', reveal); on('cAgain', again);
+    const nr = $('#cNoRoll'); if (nr) nr.onchange = e => store.set(NOROLL_KEY, e.target.checked);
     on('tPhone', () => { const s = cur(); push({ ...s, run: { ...s.run, phoneResult: !s.run.phoneResult } }); });
     on('tCount', () => { const s = cur(); push({ ...s, run: { ...s.run, showCount: !s.run.showCount } }); });
     on('tReveal', () => { const s = cur(); push({ ...s, run: { ...s.run, reveal: s.run.reveal === 'live' ? 'after' : 'live' } }); });
@@ -1410,7 +1662,11 @@ function operatorView(code) {
     if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
   }
   function closeNow() { const st = cur(); if (st.phase !== 'open') return; push({ ...st, phase: st.run.reveal === 'live' ? 'result' : 'closed' }); }
-  function reveal() { const st = cur(); if (st.run) push({ ...st, phase: 'result' }); }
+  function reveal() {
+    const st = cur(); if (!st.run) return;
+    const noRoll = store.get(NOROLL_KEY, false) === true;
+    push({ ...st, phase: 'result', rk: uid(6), reveal_at: noRoll ? null : Math.round(Clock.now() + ROLL_MS) });
+  }
   function backToWait() { push({ phase: 'waiting' }); }
   function again() { const r = cur().run; if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false, ...imgFieldsOf(r) }); }
 
@@ -1431,16 +1687,33 @@ function operatorView(code) {
   }
   function applyDummy() { $('#dummyCard').hidden = !dummyOn(); }
   applyDummy();
+  $('#btnHelp').onclick = () => showHelp(false);
+  $('#btnTitle').onclick = async () => {
+    const curT = (w.room && w.room.title) || '';
+    const t = window.prompt('部屋の名前（モニタと参加者のスマホに出ます）', curT);
+    if (t === null) return;
+    const res = await API.setTitle(code, secret, t.trim().slice(0, 40));
+    if (!res.ok) return toast(errMsg(res.error));
+    if (w.room) w.room.title = res.title;
+    const list = myRooms(); const e = list.find(x => x.code === code); if (e) { e.title = res.title; store.set(ROOMS_KEY, list); }
+    API.ping(code); onUpdate(); stage.reset(); stage.update(); toast('部屋の名前を変えました');
+  };
   $('#btnSet').onclick = () => {
     const m = openModal(`<h2>⚙️ 設定 <small class="muted" style="font-size:.8rem">（このPCのブラウザに覚えます）</small></h2>
       <label class="chk"><input type="checkbox" id="sDummy" ${dummyOn() ? 'checked' : ''}> 🧪 テスト用ダミーを使う</label>
       <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">進行タブにダミー参加者の箱が出ます。本番のときはオフに。</p>
       <label class="chk"><input type="checkbox" id="sBk" ${backupOn() ? 'checked' : ''}> 💾 このPCのブラウザに結果の控えを自動で残す</label>
       <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">保存し忘れても、トップの「このPCに残っている控え」から見られます。共用PCではオフに。</p>
+      <label class="chk"><input type="checkbox" id="sSfx" ${SFX.enabled() ? 'checked' : ''}> 🔊 効果音を鳴らす（モニタ表示用ウィンドウから鳴ります）</label>
+      <div class="vol">🔉 音量 <input type="range" id="sVol" min="0" max="100" value="${Math.round(SFX.volume() * 100)}"><span id="sVolV">${Math.round(SFX.volume() * 100)}</span><button class="mini" id="sTest">▶ ためしに鳴らす</button></div>
+      <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">表示用ウィンドウが同じPCにあれば、ここで変えるとすぐ反映されます。別のPCのときは、そのPCで設定してください。</p>
       ${DEMO ? '' : `<p class="muted" style="font-size:.82rem">🔑 マスターパスワード：${store.get(PW_KEY) ? 'このPCに保存ずみ　<button class="mini" id="sPwDel">忘れる</button>' : '保存していません'}</p>`}
       <div class="row" style="justify-content:flex-end"><button class="primary" data-close>閉じる</button></div>`);
     $('#sDummy', m).onchange = e => { store.set(DUMMY_KEY, e.target.checked); applyDummy(); };
     $('#sBk', m).onchange = e => setBackup(e.target.checked);
+    $('#sSfx', m).onchange = e => { store.set(SFX_ON_KEY, e.target.checked); SFX.refresh(); };
+    $('#sVol', m).oninput = e => { store.set(SFX_VOL_KEY, +e.target.value / 100); $('#sVolV', m).textContent = e.target.value; SFX.refresh(); };
+    $('#sTest', m).onclick = () => { SFX.unlock(); setTimeout(() => SFX.play('shutsudai'), 120); };
     const pd = $('#sPwDel', m); if (pd) pd.onclick = () => { store.del(PW_KEY); pd.parentNode.textContent = '🔑 マスターパスワード：保存していません'; toast('パスワードを忘れました'); };
   };
   async function refreshHistory() {
@@ -1464,7 +1737,7 @@ function operatorView(code) {
     if (!run) return;
     if (cur().phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って、この結果をモニタに出しますか？')) return;
     const s = run.settings || {};
-    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, phoneResult: s.phoneResult !== false, ...imgFieldsOf(s), replay: true } })) toast('モニタに結果を出しました');
+    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, phoneResult: s.phoneResult !== false, ...imgFieldsOf(s), replay: true }, rk: uid(6) })) toast('モニタに結果を出しました');
   }
   function histTick() {
     const st = cur();
