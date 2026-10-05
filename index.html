@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.11</title>
+<title>みんなでポチッ v0.11.1</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -341,6 +341,13 @@ img[data-img]:not([src]){visibility:hidden}
 .tt-f{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
 .tt-f .nm{font-size:.82rem;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
 .tt-f button{font-size:.82rem;padding:.35em .7em;margin-left:auto}
+.hfold summary{cursor:pointer;font-weight:800;font-size:.88rem;color:var(--brand);list-style:none;padding:4px 0;user-select:none}
+.hfold summary::-webkit-details-marker{display:none}
+.hfold .f-o,.hfold[open] .f-c{display:none}
+.hfold[open] .f-o{display:inline}
+.hfold[open] summary{margin-bottom:8px}
+.p-anon{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.84rem;color:var(--sub);font-weight:700}
+.p-anon input{width:auto;margin:0;accent-color:var(--brand)}
 .op-pick{background:var(--brand-soft);border:1px solid #ffd2c5;border-radius:10px;padding:8px 12px;margin-top:10px;white-space:pre-wrap;word-break:break-word;font-weight:700}
 .rec{max-width:900px;margin:0 auto;padding:24px 16px 60px}
 .rec-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -682,7 +689,7 @@ const HELP_PART = `
     <li>モニタのQRコードをスマホのカメラで読みます</li>
     <li>名前（ニックネームでOK）と、モニタに出ているカギの数字（4ケタ）を入れます</li>
     <li>質問が出たら、ボタンを押して回答します。締め切りまでは何度でも変えられます</li>
-    <li>「自由に書く」質問では、文章を書いて「送信する」を押します（${TEXT_MAX}文字まで）。締め切りまでは直せます</li>
+    <li>「自由に書く」質問では、文章を書いて「送信する」を押します（${TEXT_MAX}文字まで）。締め切りまでは直せます。名前を出したくないときは「匿名で送る」に印を付けてください</li>
     <li>質問の上に、その質問の名前のあつかい（🔒 完全匿名・👤 匿名・📢 記名）が表示されます。答える前に確認してください</li>
   </ol>`;
 const HELP_MASTER = `<div class="help">
@@ -720,18 +727,19 @@ const HELP_MASTER = `<div class="help">
   <p>ボタンの種類で「✍️ 自由に書く」を選ぶと、参加者のスマホに入力らんが出ます（${TEXT_MAX}文字まで・1人1件・締め切りまでは書き直しOK）。</p>
   <ul>
     <li>受付中、モニタには質問と「📮 とどいた○件」だけが出ます。中身はマスターにだけ見えます</li>
-    <li>操作画面の「📮 とどいた文章」に、きた順でならびます。面白いものの「🖥 モニタに出す」を押すと、モニタに大きく出ます（ピンポンが鳴ります）</li>
+    <li>操作画面の「📮 とどいた文章」に、きた順でならびます。面白いものの「🖥 モニタに出す」を押すと、モニタに大きく出ます</li>
     <li>「▶ 次の文章」で、まだ出していないものを順番に出せます。「表示を消す」で一覧の画面にもどります</li>
     <li>モニタに出た人のスマホには「あなたのコメントがモニタに出ました！」と出ます</li>
-    <li>名前：📢 記名の部屋 → モニタにも名前が出ます／👤 匿名の部屋 → マスターだけ見えます／🔒 完全匿名の部屋 → だれにもわかりません（名前を出したいときは「文の最後に名前を書いてね」と案内してください）</li>
-    <li>休憩中に集めて、あとで読むこともできます：休憩前に出題（制限時間は「制限なし」がおすすめ）→ 休憩が終わったら「⏹ 締め切る」→ ほかのアンケートを進める → 最後に「📜 履歴」タブで、その質問の文章をえらんで「🖥 モニタに出す」</li>
+    <li>名前：「自由に書く」を選ぶと、名前のあつかいは 📢 記名 になります（変えられます）。📢 記名 → モニタにも名前が出ます／👤 匿名 → マスターだけ見えます／🔒 完全匿名 → だれにもわかりません</li>
+    <li>🙈 記名・匿名の質問では、参加者がスマホで「匿名で送る」に印を付けられます。その文章は、モニタにもマスターにも名前が出ません（質問をつくるときに、選べないようにもできます）</li>
+    <li>休憩中に集めて、あとで読むこともできます：休憩前に出題（制限時間は「制限なし」がおすすめ）→ 休憩が終わったら「⏹ 締め切る」→ ほかのアンケートを進める → 最後に「📜 履歴」タブで、その質問の「▼ 文章を見る」をひらいて「🖥 モニタに出す」</li>
     <li>大喜利は、質問に「お題の画像」を付けると、モニタで答えといっしょに出ます</li>
     <li>受付中のモニタには、参加用のQRコードとカギの数字も出ます（途中からでも参加できます）</li>
     <li><b>🧱 ぜんぶタイルで出す</b>：とどいた文章を来た順にポポポンとならべます（記名の質問なら名前も）。多いときは操作画面の「▲ 上へ／▼ 下へ」、または表示用ウィンドウの上でマウスホイール・↑↓キーで動かします</li>
   </ul>
   <h3>❓ 質問文をかくす（答えから質問を当てるゲームなど）</h3>
   <ul>
-    <li>質問をつくるときに「モニタに質問文を出さない」に印を付けると、モニタには「❓ 何の質問でしょう？」と出ます（参加者のスマホには質問が出ます）</li>
+    <li>ふだんは質問文が出ます。質問をつくるときに「モニタに質問文を出さない」に印を付けると（サッと出題では、出題すると印は自動ではずれます）、モニタには「❓ 何の質問でしょう？」と出ます（参加者のスマホには質問が出ます）</li>
     <li>操作画面の「🎉 質問を発表！」で、モニタに質問文を出します（ジャン！と鳴ります）。とちゅうで「❓ モニタの質問文をかくす」にもできます</li>
     <li>例：壇上の人が目隠しをしているあいだに「免許をとった年齢は？」を自由に書くで集める → タイルで出して → 何の数字か当ててもらう</li>
   </ul>
@@ -796,7 +804,7 @@ function makeLocalServer() {
   function textList(r, runId, withNames) {
     withNames = withNames && runAnon((r.runs[runId] || {}).settings, r.anon_mode) !== 'full';
     return Object.entries((r.texts || {})[runId] || {}).sort((a, b) => a[1].t - b[1].t)
-      .map(([k, v]) => ({ eid: v.eid, body: v.body, name: withNames && r.participants[k] ? r.participants[k].name : null, at: v.t, edited: v.u > v.t + 1000 }));
+      .map(([k, v]) => ({ eid: v.eid, body: v.body, name: withNames && r.participants[k] ? r.participants[k].name : null, anon: !r.participants[k], at: v.t, edited: v.u > v.t + 1000 }));
   }
   function tally(r, runId, withNames) {
     const run = r.runs[runId]; if (!run) return null;
@@ -838,19 +846,21 @@ function makeLocalServer() {
       if (r.state.phase === 'result' && r.state.run && r.state.run.phoneResult && !isTextRun(r.state.run)) o.results = tally(r, r.state.run.id, false);
       return ok(o);
     },
-    async sendText(code, device, voterKey, runId, body) {
+    async sendText(code, device, voterKey, runId, body, anon) {
       const db = load(); const r = room(db, code); if (!r) return ng('no_room');
       if (!r.participants[device]) return ng('not_joined');
       const st = r.state;
       if (st.phase !== 'open' || !st.run || st.run.id !== runId || !isTextRun(st.run)) return ng('closed');
       if (st.ends_at && Date.now() > st.ends_at + 1500) return ng('closed');
       const b = cleanBody(body); if (textLen(b) > TEXT_MAX) return ng('too_long');
-      const key = runAnon((r.runs[runId] || {}).settings, r.anon_mode) === 'full' ? voterKey : device;
-      const m = ((r.texts ||= {})[runId] ||= {});
+      const set = (r.runs[runId] || {}).settings || {};
+      const an = runAnon(set, r.anon_mode) === 'full' || (!!anon && set.anonOpt !== false);
+      const key = an ? voterKey : device, other = an ? device : voterKey;
+      const m = ((r.texts ||= {})[runId] ||= {}); delete m[other];
       if (!b) { delete m[key]; save(db); return ok({ deleted: true }); }
       const now = Date.now();
       m[key] = m[key] ? { ...m[key], body: b, u: now } : { eid: uid(12), body: b, t: now, u: now };
-      save(db); return ok({ eid: m[key].eid, body: b });
+      save(db); return ok({ eid: m[key].eid, body: b, anon: an });
     },
     async getTexts(code, secret, runId) {
       const r = auth(load(), code, secret); if (!r) return ng('no_room');
@@ -934,7 +944,7 @@ async function makeSupaServer() {
     publicState: c => rpc('ev_public_state', { p_code: c }),
     join: (c, pin, d, name) => rpc('ev_join', { p_code: c, p_pin: pin, p_device: d, p_name: name }),
     vote: (c, d, vk, run, ch) => rpc('ev_vote', { p_code: c, p_device: d, p_voter_key: vk, p_run_id: run, p_choice: ch }),
-    sendText: (c, d, vk, run, body) => rpc('ev_send_text', { p_code: c, p_device: d, p_voter_key: vk, p_run_id: run, p_body: body }),
+    sendText: (c, d, vk, run, body, anon) => rpc('ev_send_text', { p_code: c, p_device: d, p_voter_key: vk, p_run_id: run, p_body: body, p_anon: !!anon }),
     getTexts: (c, s, run) => rpc('ev_get_texts', { p_code: c, p_secret: s, p_run_id: run }),
     results: (c, s, run) => rpc('ev_results', { p_code: c, p_secret: s, p_run_id: run }),
     exportAll: (c, s) => rpc('ev_export', { p_code: c, p_secret: s }),
@@ -975,7 +985,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.11</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.11.1</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -1330,7 +1340,6 @@ function displayView(code) {
     // 質問文の発表（かくす → 出す）
     const hq = run ? run.id + ':' + !!run.hideQ : null;
     if (hq !== sd.hq) { if (run && sd.hq === run.id + ':true' && !run.hideQ) SFX.play('roll_end'); sd.hq = hq; }
-    if (st.phase === 'result' && st.pk && st.pk !== sd.pk) { sd.pk = st.pk; SFX.play('shutsudai'); }
     let want = null;
     if (st.phase === 'open' && run) {
       if (run.id !== sd.runId) { sd.runId = run.id; sd.gongRun = null; SFX.play('shutsudai'); }
@@ -1431,6 +1440,7 @@ function participantView(code) {
           <div class="p-timer" id="pTimer"><div class="bar"><i id="pBar"></i></div><span id="pSec"></span></div>
           <textarea id="pTxt" class="p-txt" rows="4" maxlength="400" placeholder="ここに書いてね（${TEXT_MAX}文字まで）"></textarea>
           <div class="p-txtbar"><span class="p-left" id="pLeft"></span><button class="primary big" id="pSend">送信する</button></div>
+          ${runAnon(run, pub.anon_mode) !== 'full' && run.anonOpt !== false ? `<label class="p-anon"><input type="checkbox" id="pAnon"> 匿名で送る（名前はモニタにもマスターにも出ません）</label>` : ''}
           <div class="p-note" id="pTxtNote"></div>
         </div>`;
       } else {
@@ -1482,26 +1492,30 @@ function participantView(code) {
   }
   function setupText(run) {
     const ta = $('#pTxt'), btn = $('#pSend'), left = $('#pLeft'), note = $('#pTxtNote');
+    const ac = $('#pAnon');
     ta.value = drafts[run.id] ?? (myTexts[run.id] ? myTexts[run.id].body : '');
+    if (ac) ac.checked = drafts['a:' + run.id] ?? !!(myTexts[run.id] && myTexts[run.id].anon);
+    const wantAnon = () => !!(ac && ac.checked);
     function upd() {
-      const v = cleanBody(ta.value), n = textLen(v), mt = myTexts[run.id], same = mt && mt.body === v;
+      const v = cleanBody(ta.value), n = textLen(v), mt = myTexts[run.id], same = mt && mt.body === v && !!mt.anon === wantAnon();
       left.textContent = n > TEXT_MAX ? `${n - TEXT_MAX}文字オーバー` : `のこり ${TEXT_MAX - n}文字`;
       left.classList.toggle('over', n > TEXT_MAX);
       btn.textContent = !v && mt ? '取り消す' : mt ? '直して送る' : '送信する';
       btn.disabled = sending || n > TEXT_MAX || (!v && !mt) || same;
       note.className = 'p-note' + (same ? ' done' : '');
-      note.textContent = same ? '✓ 送信しました。締め切りまで直せます' : mt ? (v ? '✏️ 直したら、もう一度押してね' : '「取り消す」で送ったものを消せます') : '書いたら「送信する」を押してね';
+      note.textContent = same ? `✓ ${mt.anon && ac ? '匿名で' : ''}送信しました。締め切りまで直せます` : mt ? (v ? '✏️ 直したら、もう一度押してね' : '「取り消す」で送ったものを消せます') : '書いたら「送信する」を押してね';
     }
     ta.oninput = () => { drafts[run.id] = ta.value; upd(); };
+    if (ac) ac.onchange = () => { drafts['a:' + run.id] = ac.checked; upd(); };
     btn.onclick = async () => {
       const v = cleanBody(ta.value); if (textLen(v) > TEXT_MAX) return;
       sending = true; upd();
-      const res = await API.sendText(code, device, voteToken, run.id, v);
+      const res = await API.sendText(code, device, voteToken, run.id, v, wantAnon());
       sending = false;
       if (res.ok) {
-        if (res.deleted) delete myTexts[run.id]; else myTexts[run.id] = { eid: res.eid, body: res.body ?? v };
+        if (res.deleted) delete myTexts[run.id]; else myTexts[run.id] = { eid: res.eid, body: res.body ?? v, anon: !!res.anon };
         const ks = Object.keys(myTexts); if (ks.length > 40) ks.slice(0, ks.length - 40).forEach(x => delete myTexts[x]);
-        S.set(mtKey, myTexts); delete drafts[run.id];
+        S.set(mtKey, myTexts); delete drafts[run.id]; delete drafts['a:' + run.id];
         if (!res.deleted) ta.value = myTexts[run.id].body;
         ta.blur(); toast(res.deleted ? '取り消しました' : '送信しました！');
       } else {
@@ -1584,7 +1598,7 @@ function cleanQuestion(q, keepId) {
   const c = { id: keepId && /^q[a-z0-9]{4,20}$/.test(q.id) ? q.id : 'q' + uid(8), text: String(q.text || '').slice(0, 200), type: q.type, count: Math.min(6, Math.max(2, q.count | 0 || 4)),
     labels: strArr(q.labels, 6, 24), duration: DURATIONS.some(d => d[0] === +q.duration) ? +q.duration : 30,
     reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false, phoneResult: q.phoneResult !== false,
-    ...imgFieldsOf(q), imgQ: q.imgQ === 'high' ? 'high' : 'normal', anon: MODES[q.anon] ? q.anon : null, hideQ: q.hideQ === true };
+    ...imgFieldsOf(q), imgQ: q.imgQ === 'high' ? 'high' : 'normal', anon: MODES[q.anon] ? q.anon : null, hideQ: q.hideQ === true, anonOpt: q.anonOpt !== false };
   if (isTextQ(c)) { c.reveal = 'after'; c.phoneResult = false; c.optImgs = []; }
   return isTextQ(c) || buildOptions(c).length >= 2 ? c : null;
 }
@@ -1605,7 +1619,7 @@ function parseRecord(obj) {
         .map(t => ({ eid: String(t.eid || uid(8)).slice(0, 24), body: String(t.body ?? '').slice(0, 400), name: t.name == null ? null : String(t.name).slice(0, 40), at: +t.at || 0, edited: !!t.edited }));
       return { run_id: String(x.run_id || uid(8)), question: String(x.question || '').slice(0, 300), options: [], counts: [], total: texts.length,
         started_at: +x.started_at || 0, names: null, texts,
-        settings: { type: 'text', duration: +st.duration || 0, reveal: 'after', showCount: st.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...st, optImgs: [] }), ...(MODES[st.anon] ? { anon: st.anon } : {}) } };
+        settings: { type: 'text', duration: +st.duration || 0, reveal: 'after', showCount: st.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...st, optImgs: [] }), ...(MODES[st.anon] ? { anon: st.anon } : {}), anonOpt: st.anonOpt !== false } };
     }
     const options = strArr(x.options, 6, 40); if (options.length < 2) return null;
     const counts = options.map((_, i) => Math.max(0, +((x.counts || [])[i]) || 0));
@@ -1627,7 +1641,7 @@ function listBackups() {
 function runToQuestion(run) {
   const st = run.settings || {};
   const base = { text: run.question, duration: st.duration || 0, reveal: st.reveal || 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st), anon: MODES[st.anon] ? st.anon : null, hideQ: st.hideQ === true };
-  if (st.type === 'text') return { ...base, type: 'text', count: 4, labels: [], reveal: 'after', phoneResult: false, optImgs: [] };
+  if (st.type === 'text') return { ...base, type: 'text', count: 4, labels: [], reveal: 'after', phoneResult: false, optImgs: [], anonOpt: st.anonOpt !== false };
   const asType = { ...base, type: st.type, count: run.options.length };
   if (BTN_TYPES[st.type] && st.type !== 'custom' && buildOptions(asType).join('\u0001') === run.options.join('\u0001')) return asType;
   return { ...base, type: 'custom', count: run.options.length, labels: run.options.slice() };
@@ -1643,21 +1657,22 @@ function recordCsv(rec) {
 }
 const fileStamp = () => { const d = new Date(); return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`; };
 const recName = (rec, ext) => `アンケート記録_${(rec.title || rec.code || 'event').replace(/[\\/:*?"<>|\s]+/g, '_')}_${fileStamp()}.${ext}`;
-function textTiles(texts, act, curEid, shown) {
+function textTiles(texts, act, curEid, shown, showAnon) {
   if (!texts || !texts.length) return '<p class="muted" style="margin:0">まだとどいていません</p>';
   return `<div class="ttiles">${texts.map((t, i) => `<div class="ttile ${t.eid === curEid ? 'cur' : shown && shown.has(t.eid) ? 'shown' : ''}">
     <div class="tt-h"><span>#${i + 1}${t.at ? '・' + fmtTime(t.at).split(' ')[1] : ''}${t.edited ? '・直しあり' : ''}</span><span>${t.eid === curEid ? '🖥 表示中' : shown && shown.has(t.eid) ? '✓ 紹介ずみ' : ''}</span></div>
     <div class="tt-body">${esc(t.body)}</div>
-    <div class="tt-f">${t.name ? `<span class="nm">👤 ${esc(t.name)}</span>` : ''}${act ? act(t) : ''}</div></div>`).join('')}</div>`;
+    <div class="tt-f">${t.name ? `<span class="nm">👤 ${esc(t.name)}</span>` : t.anon && showAnon ? '<span class="nm">🙈 匿名</span>' : ''}${act ? act(t) : ''}</div></div>`).join('')}</div>`;
 }
-function runsHtml(rec, actions, nowId, textAct, curEid, shown) {
+function runsHtml(rec, actions, nowId, textAct, curEid, shown, foldOpen) {
   if (!rec.runs.length) return '<p class="muted" style="margin:0">まだ出題していません</p>';
   return rec.runs.map((run, k) => {
     const tot = run.total, max = Math.max(1, ...run.counts), st = run.settings || {};
     if (isTextQ(st)) return `<div class="hrun ${run.run_id === nowId ? 'now' : ''}">
       <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${imgTag(st.img, 'othumb')}${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
       <div class="chips" style="margin-bottom:8px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">✍️ 自由に書く</span><span class="chip">${modeOf(runAnon(st, rec.anon_mode)).icon} ${modeOf(runAnon(st, rec.anon_mode)).name}</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">📮 ${tot}件</span></div>
-      ${textTiles(run.texts, textAct ? t => textAct(run, t) : null, curEid, shown)}</div>`;
+      <details class="hfold" data-fold="${esc(run.run_id)}" ${(foldOpen ? foldOpen(run) : false) ? 'open' : ''}><summary><span class="f-c">▼ 文章を見る（${tot}件）</span><span class="f-o">▲ たたむ</span></summary>
+      ${textTiles(run.texts, textAct ? t => textAct(run, t) : null, curEid, shown, runAnon(st, rec.anon_mode) !== 'full')}</details></div>`;
     return `<div class="hrun ${run.run_id === nowId ? 'now' : ''}">
       <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${imgTag(st.img, 'othumb')}${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
       <div class="chips" style="margin-bottom:6px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">${run.options.length}択</span><span class="chip">${modeOf(runAnon(st, rec.anon_mode)).icon} ${modeOf(runAnon(st, rec.anon_mode)).name}</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">回答 ${tot}人</span></div>
@@ -1731,6 +1746,7 @@ function qFields(p, quick) {
       <label class="f" id="${p}RevealWrap"><span>結果の見せ方</span><select id="${p}Reveal"><option value="after">締め切ってから発表</option><option value="live">投票中も見せる</option></select></label>
     </div>
     <label class="f"><span>名前のあつかい（出題したあとは変えられません）</span><select id="${p}Anon">${Object.entries(MODES).map(([k, m]) => `<option value="${k}">${m.icon} ${m.name}</option>`).join('')}</select><small class="muted" id="${p}AnonTxt" style="display:block;margin-top:4px"></small></label>
+    <label class="chk" id="${p}AnonOptWrap"><input type="checkbox" id="${p}AnonOpt" checked> 🙈 スマホで「匿名で送る」を選べるようにする</label>
     <label class="chk"><input type="checkbox" id="${p}HideQ"> ❓ モニタに質問文を出さない（あとで「質問を発表」で出す）</label>
     <label class="chk"><input type="checkbox" id="${p}Show" checked> <span id="${p}ShowTxt">回答人数（例：37 / 42人）をモニタに出す</span></label>
     <label class="chk" id="${p}PhoneWrap"><input type="checkbox" id="${p}Phone" checked> 結果発表のとき、参加者のスマホにもグラフを出す</label>
@@ -1761,12 +1777,13 @@ function qForm(p, root) {
   }
   const api = {
     onImage: null, defAnon: 'master',
+    clearHideQ() { g('HideQ').checked = false; api.sync(); },
     setDefAnon(m) { api.defAnon = m; g('Anon').value = m; api.sync(); },
     read() {
       const base = { text: g('Text').value.trim(), type: g('Type').value, count: +g('Count').value,
         labels: g('LabelsWrap') ? $$('[data-lbl]', g('LabelsWrap')).map(i => i.value.trim()) : [],
         duration: +g('Dur').value, reveal: g('Reveal').value, showCount: g('Show').checked, phoneResult: g('Phone').checked,
-        anon: MODES[g('Anon').value] ? g('Anon').value : api.defAnon, hideQ: g('HideQ').checked };
+        anon: MODES[g('Anon').value] ? g('Anon').value : api.defAnon, hideQ: g('HideQ').checked, anonOpt: g('AnonOpt').checked };
       if (g('ImgBox')) {
         const n = buildOptions(base).length;
         Object.assign(base, { img: im.img, optImgs: im.optImgs.slice(0, n), imgFit: g('ImgFit').value, imgQ: g('ImgQ').value, phoneImg: g('PhoneImg').checked });
@@ -1777,7 +1794,7 @@ function qForm(p, root) {
       g('Text').value = q.text || ''; g('Type').value = q.type || 'yesno'; g('Count').value = String(q.count || 4);
       if (g('LabelsWrap')) $$('[data-lbl]', g('LabelsWrap')).forEach((i, k) => i.value = (q.labels || [])[k] || '');
       g('Dur').value = String(q.duration ?? 30); g('Reveal').value = q.reveal || 'after'; g('Show').checked = q.showCount !== false; g('Phone').checked = q.phoneResult !== false;
-      g('Anon').value = MODES[q.anon] ? q.anon : api.defAnon; g('HideQ').checked = q.hideQ === true;
+      prevType = g('Type').value; g('Anon').value = MODES[q.anon] ? q.anon : api.defAnon; g('HideQ').checked = q.hideQ === true; g('AnonOpt').checked = q.anonOpt !== false;
       if (g('ImgBox')) {
         im.img = IMG_ID_RE.test(q.img || '') ? q.img : null; im.optImgs = (q.optImgs || []).slice();
         g('ImgFit').value = q.imgFit === 'cover' ? 'cover' : 'contain'; g('ImgQ').value = q.imgQ === 'high' ? 'high' : 'normal'; g('PhoneImg').checked = q.phoneImg !== false;
@@ -1793,6 +1810,7 @@ function qForm(p, root) {
       if (g('ImgFitWrap')) g('ImgFitWrap').hidden = txt;
       if (g('OptImgs')) g('OptImgs').hidden = txt;
       const am = g('Anon').value;
+      g('AnonOptWrap').hidden = !txt || am === 'full';
       g('AnonTxt').textContent = am === 'full' ? 'だれが答えたか、マスターにもわかりません' : am === 'master' ? '名前はマスターだけが見られます（モニタには出ません）' : txt ? 'モニタに文章を出すとき、名前も出ます' : '選んだ人の名前がモニタに出ます';
       const ops = buildOptions(api.read());
       if (g('Prev')) g('Prev').innerHTML = txt ? `<small>✍️ 参加者のスマホに入力らんが出ます（${TEXT_MAX}文字まで）。とどいた文章は、出題するとこの画面に並びます</small>`
@@ -1819,8 +1837,13 @@ function qForm(p, root) {
     };
   }
   root.addEventListener('input', e => { if (e.target.id && e.target.id.startsWith(p) || e.target.dataset.lbl) api.sync(); });
+  let prevType = g('Type').value;
   root.addEventListener('change', e => {
-    if (e.target.id === p + 'Type' && e.target.value === 'text' && g('Dur').value === '30') g('Dur').value = '0'; // 感想・大喜利は「制限なし」がおすすめ
+    if (e.target.id === p + 'Type' && e.target.value === 'text') {
+      if (g('Dur').value === '30') g('Dur').value = '0';  // 感想・大喜利は「制限なし」がおすすめ
+      g('Anon').value = 'named';                          // 感想・大喜利は名前を出すのが基本（スマホで匿名も選べる）
+    } else if (e.target.id === p + 'Type' && prevType === 'text') g('Anon').value = api.defAnon;  // 選択肢にもどしたら最初の設定に
+    if (e.target.id === p + 'Type') prevType = e.target.value;
     if (e.target.id && e.target.id.startsWith(p)) api.sync();
   });
   g('Anon').value = api.defAnon;
@@ -2000,7 +2023,7 @@ function operatorView(code) {
       const k = JSON.stringify(['t', run.id, list, curEid, [...shown].length, w.participants, md]);
       if (k === opresKey) return; opresKey = k;
       $('#opresH').innerHTML = `📮 とどいた文章 <small>${list ? `${list.length}件 / 参加 ${w.participants}人` : ''}（きた順・マスターだけに見えています）</small>`;
-      box.innerHTML = (list ? textTiles(list, t => `<button class="${t.eid === curEid ? '' : 'primary'}" data-pick="${esc(t.eid)}">${t.eid === curEid ? '🖥 表示中' : '🖥 モニタに出す'}</button>`, curEid, shown) : '<p class="muted" style="margin:0">読みこみ中…</p>')
+      box.innerHTML = (list ? textTiles(list, t => `<button class="${t.eid === curEid ? '' : 'primary'}" data-pick="${esc(t.eid)}">${t.eid === curEid ? '🖥 表示中' : '🖥 モニタに出す'}</button>`, curEid, shown, md !== 'full') : '<p class="muted" style="margin:0">読みこみ中…</p>')
         + `<p class="muted" style="font-size:.8rem;margin:10px 0 0">${md === 'full' ? '🔒 完全匿名なので、名前は記録されていません' : md === 'named' ? '📢 記名の質問なので、モニタに名前も出ます' : '👤 名前はマスターにだけ見えます（モニタには出ません）'}</p>`;
       return;
     }
@@ -2032,14 +2055,15 @@ function operatorView(code) {
     const anon = MODES[q.anon] ? q.anon : (w.room ? w.room.anon_mode : 'full'), hideQ = q.hideQ === true;
     if (isTextQ(q)) {
       const id = 'r' + uid(10), question = (q.text || '').trim() || 'ひとこと書いてね';
-      const run = { id, question, options: [], settings: { type: 'text', duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, anon, hideQ } };
-      const ok = await push({ phase: 'open', run: { id, kind: 'text', question, options: [], duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, anon, hideQ, qid: q.id || null } }, q.duration, run);
+      const run = { id, question, options: [], settings: { type: 'text', duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, anon, hideQ, anonOpt: q.anonOpt !== false } };
+      const ok = await push({ phase: 'open', run: { id, kind: 'text', question, options: [], duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, anon, hideQ, anonOpt: q.anonOpt !== false, qid: q.id || null } }, q.duration, run);
       if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
-      return;
+      return ok;
     }
     const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options, settings: { type: q.type, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf, anon, hideQ } };
     const ok = await push({ phase: 'open', run: { id: run.id, question: run.question, options: run.options, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf, anon, hideQ, qid: q.id || null } }, q.duration, run);
     if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
+    return ok;
   }
   function closeNow() { const st = cur(); if (st.phase !== 'open') return; push({ ...st, phase: st.run.reveal === 'live' ? 'result' : 'closed' }); }
   function reveal() {
@@ -2098,7 +2122,7 @@ function operatorView(code) {
     const run = cur().run, t = isTextRun(run) && tx.runId === run.id && tx.list.find(x => x.eid === b.dataset.pick);
     if (t && !(cur().pick && cur().pick.eid === t.eid)) pickText(run, t);
   });
-  function again() { const r = cur().run; if (isTextRun(r)) return ask({ text: r.question, type: 'text', duration: r.duration, showCount: r.showCount, ...imgFieldsOf(r), anon: r.anon }); if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false, ...imgFieldsOf(r), anon: r.anon }); }
+  function again() { const r = cur().run; if (isTextRun(r)) return ask({ text: r.question, type: 'text', duration: r.duration, showCount: r.showCount, ...imgFieldsOf(r), anon: r.anon, anonOpt: r.anonOpt !== false }); if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false, ...imgFieldsOf(r), anon: r.anon }); }
 
   setInterval(() => {
     const st = cur();
@@ -2108,6 +2132,7 @@ function operatorView(code) {
 
   /* --- 履歴 --- */
   let lastRec = null, histRev = null, histT = null, histBusy = false;
+  const folds = new Map();  // 履歴の「文章を見る」のひらき具合（run_id → true/false）
   const bkNote = () => { $('#bkNote').textContent = backupOn() ? '💾 このPCのブラウザに結果の控えを自動で残しています（⚙️ 設定で変えられます）' : '💾 ブラウザへの控えはオフです（⚙️ 設定で変えられます）'; };
   bkNote();
   function setBackup(on) {
@@ -2161,7 +2186,9 @@ function operatorView(code) {
     setTimeout(() => hydrateImgs($('#histList')), 0);
     const curEid = st.phase === 'result' && st.pick ? st.pick.eid : null;
     $('#histList').innerHTML = `<div class="card">${runsHtml(rec, run => `${isTextQ(run.settings) ? `<button class="primary" data-htiles="${esc(run.run_id)}">🧱 タイルでモニタに出す</button>` : `<button class="primary" data-show="${esc(run.run_id)}">🖥 結果をモニタに出す</button>`}<button data-reask="${esc(run.run_id)}">🔁 もう一度出題</button>`, nowId,
-      (run, t) => `<button class="${t.eid === curEid ? '' : 'primary'}" data-hpick="${esc(run.run_id)}" data-eid="${esc(t.eid)}">${t.eid === curEid ? '🖥 表示中' : '🖥 モニタに出す'}</button>`, curEid, shown)}</div>`;
+      (run, t) => `<button class="${t.eid === curEid ? '' : 'primary'}" data-hpick="${esc(run.run_id)}" data-eid="${esc(t.eid)}">${t.eid === curEid ? '🖥 表示中' : '🖥 モニタに出す'}</button>`, curEid, shown,
+      run => folds.has(run.run_id) ? folds.get(run.run_id) : run.run_id === nowId)}</div>`;
+    $$('[data-fold]', $('#histList')).forEach(d => d.ontoggle = () => folds.set(d.dataset.fold, d.open));
     $$('[data-show]', $('#histList')).forEach(b => b.onclick = () => showOnMonitor(lastRec.runs.find(r => r.run_id === b.dataset.show)));
     $$('[data-hpick]', $('#histList')).forEach(b => b.onclick = () => {
       const r = lastRec.runs.find(x => x.run_id === b.dataset.hpick), t = r && (r.texts || []).find(x => x.eid === b.dataset.eid);
@@ -2173,7 +2200,7 @@ function operatorView(code) {
   }
   function textRunOf(r) {
     const s = r.settings || {}, now = cur().run;
-    return now && now.id === r.run_id ? now : { id: r.run_id, kind: 'text', question: r.question, options: [], duration: s.duration || 0, reveal: 'after', showCount: s.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...s, optImgs: [] }), anon: MODES[s.anon] ? s.anon : null, replay: true };
+    return now && now.id === r.run_id ? now : { id: r.run_id, kind: 'text', question: r.question, options: [], duration: s.duration || 0, reveal: 'after', showCount: s.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...s, optImgs: [] }), anon: MODES[s.anon] ? s.anon : null, anonOpt: s.anonOpt !== false, replay: true };
   }
   async function showOnMonitor(run) {
     if (!run) return;
@@ -2192,7 +2219,7 @@ function operatorView(code) {
 
   /* --- サッと出題 --- */
   const quick = qForm('qk', $('#quick'));
-  $('#qkGo').onclick = () => ask(quick.read());
+  $('#qkGo').onclick = async () => { if (await ask(quick.read())) quick.clearHideQ(); };  // 「質問文を出さない」は1回ごと
 
   /* --- 質問バンク（部屋ごと・サーバー保存） --- */
   let myQrev = null, qSaveT = null, qSaving = false, qDirty = false;
