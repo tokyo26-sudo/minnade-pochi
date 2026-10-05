@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.7</title>
+<title>みんなでポチッ v0.8</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -205,6 +205,48 @@ body.v-op{background:#eef0f5}
 .sharebox img{width:132px;height:132px;image-rendering:pixelated;border:6px solid #fff;outline:1px solid var(--line);border-radius:6px}
 .sharebox .u{font-size:.8rem;word-break:break-all;background:#f4f5f9;border-radius:8px;padding:6px 8px;margin:6px 0}
 .op-hist{max-width:980px}
+img[data-img]:not([src]){visibility:hidden}
+/* stage images */
+.st-qrow{display:flex;gap:2.6cqw;align-items:center;margin:0 0 2.2cqh}
+.st-qrow .st-q{flex:1;text-align:left;margin:0}
+.st-qimg{height:24cqh;width:40cqh;flex:none;border-radius:1.6cqh;overflow:hidden;background:rgba(255,255,255,.08)}
+.st-qimg.big{height:44cqh;width:72cqh}
+.st-qimg.sm{height:17cqh;width:28cqh}
+.cl-img .noimg{display:flex;height:100%;align-items:center;justify-content:center;color:var(--c);font-weight:900}
+.st-qimg img{width:100%;height:100%;object-fit:contain;display:block}
+.tiles.img{align-content:stretch;grid-auto-rows:1fr}
+.tile.timg{display:flex;flex-direction:column;align-items:stretch;justify-content:stretch;padding:1.1cqh;min-height:0}
+.tile.timg b{font-size:min(2.9cqw,4.8cqh);padding:.7cqh .5cqw .2cqh;line-height:1.15}
+.ti{flex:1;min-height:0;border-radius:1.4cqh;overflow:hidden;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center}
+.ti img{width:100%;height:100%;object-fit:contain;display:block}
+.fit-cover img{object-fit:cover!important}
+.ti .noimg{font-size:min(5cqw,9cqh);font-weight:900;color:var(--c)}
+.cl-img{height:12cqh;border-radius:1cqh;overflow:hidden;background:rgba(255,255,255,.94);margin-bottom:.8cqh}
+.cl-img img{width:100%;height:100%;object-fit:contain;display:block}
+/* phone images */
+.p-qimg{position:relative;border-radius:14px;overflow:hidden;background:#fff;margin:0 0 12px;max-height:30vh;display:flex;justify-content:center}
+.p-qimg img{max-width:100%;max-height:30vh;object-fit:contain;display:block}
+.p-qimg.small,.p-qimg.small img{max-height:20vh}
+.zoom{position:absolute;top:6px;left:6px;background:rgba(255,255,255,.92);border-radius:99px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.p-opts.imgs{grid-template-columns:1fr 1fr}
+.p-opts.imgs .opt{min-height:0!important;padding:6px;font-size:1.05rem!important;display:flex;flex-direction:column;gap:5px}
+.oi{position:relative;width:100%;aspect-ratio:4/3;border-radius:11px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center}
+.p-opts.imgs.n2 .oi{aspect-ratio:1}
+.oi img{width:100%;height:100%;object-fit:contain;display:block}
+.oi .noimg{font-size:2rem;font-weight:900;color:var(--c)}
+.zoomimg{width:100%;max-height:80vh;object-fit:contain;display:block;border-radius:10px;background:#fff}
+/* editor images */
+.imgbox{border:1px dashed #cfd4e0;border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.imgbox>span{display:block;font-size:.78rem;color:var(--sub);font-weight:700;margin-bottom:6px}
+.imgrow{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.imgthumb{position:relative;width:96px;height:64px;border-radius:8px;overflow:hidden;background:#eef0f6;flex:none}
+.imgthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.imgthumb button{position:absolute;top:2px;right:2px;padding:0 .45em;font-size:.75rem;border-radius:6px}
+.imgadd{width:96px;height:64px;border:1px dashed #b8bfd0;font-size:.8rem;color:var(--sub);font-weight:700;flex:none}
+.optimgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-bottom:8px}
+.optimg{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.optimg .bp{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.othumb{width:34px;height:26px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:5px;background:#fff}
 .p-res{margin:6px 0 4px}
 .p-res .ores-row{grid-template-columns:minmax(4.5em,auto) 1fr auto;margin:12px 0}
 .p-res .ores-lab{font-size:1.05rem;padding:.3em .7em;max-width:9em}
@@ -353,7 +395,7 @@ const ERR = {
   bad_password: 'マスターパスワードがちがいます', no_password_set: 'サーバーにマスターパスワードが設定されていません（README参照）',
   bad_pin: 'カギの数字がちがいます', bad_name: '名前は1〜20文字で入れてください', no_room: '部屋が見つかりません（終了したか、24時間たって消えました）',
   closed: 'もう締め切られています', not_joined: '参加が切れました。もう一度入ってください', room_full: '満員です',
-  network: '通信できませんでした。電波を確認してください', server: 'サーバーでエラーが起きました', too_many: '質問が多すぎます（300問まで）',
+  network: '通信できませんでした。電波を確認してください', server: 'サーバーでエラーが起きました', too_many: '質問が多すぎます（300問まで）', bad_image: '画像を読みこめませんでした', too_many_images: '画像が多すぎます（1部屋400枚まで）', storage_full: 'おためしモードの保存場所がいっぱいです', no_image: '画像が見つかりません',
 };
 const errMsg = e => ERR[e] || ('エラー：' + e);
 
@@ -370,6 +412,85 @@ function qrDataUrl(text) {
     qrCache.set(text, url); return url;
   } catch { return null; }
 }
+
+/* =========================================================
+   画像（圧縮・番号づけ・読みこみ）
+   ========================================================= */
+const IMG = new Map(), IMG_WAIT = new Map();
+let IMG_ROOM = null;
+const IMG_ID_RE = /^i[0-9a-f]{16}$/;
+const IMG_SIZES = { q: { normal: [1280, 0.8], high: [1600, 0.9] }, o: { normal: [640, 0.8], high: [900, 0.9] } };
+const fmtKB = n => n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
+function getImg(id) {
+  if (!id) return Promise.resolve(null);
+  if (IMG.has(id)) return Promise.resolve(IMG.get(id));
+  if (!IMG_ROOM || !API) return Promise.resolve(null);
+  if (IMG_WAIT.has(id)) return IMG_WAIT.get(id);
+  const pr = API.getImage(IMG_ROOM, id).then(r => {
+    IMG_WAIT.delete(id);
+    if (r.ok && typeof r.data === 'string' && r.data.startsWith('data:image/')) { IMG.set(id, r.data); return r.data; }
+    return null;
+  });
+  IMG_WAIT.set(id, pr); return pr;
+}
+const imgTag = (id, cls = '') => IMG_ID_RE.test(id || '') ? `<img class="${cls}" data-img="${id}" alt="">` : '';
+function hydrateImgs(root) {
+  $$('img[data-img]', root).forEach(im => {
+    const id = im.dataset.img; if (im.dataset.loaded === id) return;
+    const d = IMG.get(id);
+    if (d) { im.src = d; im.dataset.loaded = id; }
+    else getImg(id).then(x => { if (x && im.dataset.img === id) { im.src = x; im.dataset.loaded = id; } });
+  });
+}
+async function hashData(str) {
+  try {
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return 'i' + Array.from(new Uint8Array(b).slice(0, 8), x => x.toString(16).padStart(2, '0')).join('');
+  } catch {
+    let h1 = 0x811c9dc5, h2 = 0x9e3779b9;
+    for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619) >>> 0; h2 = Math.imul(h2 ^ c, 2246822519) >>> 0; }
+    return 'i' + h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+  }
+}
+function compressImage(file, maxEdge, quality) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      try {
+        let w = img.naturalWidth, h = img.naturalHeight; if (!w || !h) throw 0;
+        let sc = Math.min(1, maxEdge / Math.max(w, h)), q = quality, data = '';
+        for (let tries = 0; tries < 8; tries++) {
+          const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(w * sc)); cv.height = Math.max(1, Math.round(h * sc));
+          const cx = cv.getContext('2d'); cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+          data = cv.toDataURL('image/jpeg', q);
+          if (data.length <= 900000) break;
+          if (q > 0.55) q -= 0.1; else sc *= 0.8;
+        }
+        URL.revokeObjectURL(url); resolve(data);
+      } catch (e) { URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    img.src = url;
+  });
+}
+function sanitizeImages(m) {
+  const out = {};
+  if (m && typeof m === 'object') for (const [k, v] of Object.entries(m)) if (IMG_ID_RE.test(k) && typeof v === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(v) && v.length <= 1200000) out[k] = v;
+  return out;
+}
+const idsOfQuestions = qs => { const s = new Set(); (qs || []).forEach(q => { if (q.img) s.add(q.img); (q.optImgs || []).forEach(x => x && s.add(x)); }); return [...s]; };
+const idsOfRecord = rec => { const s = new Set(idsOfQuestions(rec.questions)); rec.runs.forEach(r => idsOfQuestions([r.settings || {}]).forEach(x => s.add(x))); return [...s]; };
+async function collectImages(ids) { const out = {}; for (const id of ids) { const d = await getImg(id); if (d) out[id] = d; } return out; }
+async function putImages(code, secret, map) {
+  let fail = 0;
+  for (const [id, d] of Object.entries(map || {})) { IMG.set(id, d); const r = await API.putImage(code, secret, id, d); if (!r.ok) fail++; }
+  if (fail) toast(`画像${fail}枚を保存できませんでした`, 4000);
+  return fail;
+}
+const hasOptImgs = r => !!(r && Array.isArray(r.optImgs) && r.optImgs.some(Boolean));
+const imgFieldsOf = q => ({ img: IMG_ID_RE.test(q.img || '') ? q.img : null, optImgs: (Array.isArray(q.optImgs) ? q.optImgs : []).slice(0, 6).map(x => IMG_ID_RE.test(x || '') ? x : null),
+  imgFit: q.imgFit === 'cover' ? 'cover' : 'contain', phoneImg: q.phoneImg !== false });
+function zoomImg(id) { const d = IMG.get(id); if (d) openModal(`<img class="zoomimg" src="${d}" alt="" data-close><div class="row" style="justify-content:flex-end;margin-top:10px"><button data-close>閉じる</button></div>`); }
 
 /* =========================================================
    サーバーとのやりとり
@@ -429,6 +550,11 @@ function makeLocalServer() {
       for (const v of Object.values(r.votes)) for (const k of Object.keys(v)) if (k.startsWith('bot-') || k.startsWith('vtbot-')) delete v[k];
       save(db); return ok({ removed: n });
     },
+    async putImage(code, secret, id, data) {
+      if (!auth(load(), code, secret)) return ng('no_room');
+      try { localStorage.setItem('evapp_demo_img_' + id, data); return ok({ id }); } catch { return ng('storage_full'); }
+    },
+    async getImage(code, id) { try { const d = localStorage.getItem('evapp_demo_img_' + id); return d ? ok({ data: d }) : ng('no_image'); } catch { return ng('no_image'); } },
     async getQuestions(code, secret) { const r = auth(load(), code, secret); if (!r) return ng('no_room'); return ok({ questions: r.questions || [], qrev: r.qrev || 0 }); },
     async setQuestions(code, secret, qs) {
       const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
@@ -493,6 +619,8 @@ async function makeSupaServer() {
     results: (c, s, run) => rpc('ev_results', { p_code: c, p_secret: s, p_run_id: run }),
     exportAll: (c, s) => rpc('ev_export', { p_code: c, p_secret: s }),
     closeRoom: (c, s) => rpc('ev_close_room', { p_code: c, p_secret: s }),
+    putImage: (c, s, id, data) => rpc('ev_put_image', { p_code: c, p_secret: s, p_id: id, p_data: data }),
+    getImage: (c, id) => rpc('ev_get_image', { p_code: c, p_id: id }),
     removeBots: (c, s) => rpc('ev_remove_bots', { p_code: c, p_secret: s }),
     getQuestions: (c, s) => rpc('ev_get_questions', { p_code: c, p_secret: s }),
     setQuestions: (c, s, q) => rpc('ev_set_questions', { p_code: c, p_secret: s, p_questions: q }),
@@ -525,7 +653,7 @@ function landingView(prefill) {
   const rooms = myRooms();
   $('#app').innerHTML = `<div class="land">
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.7</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.8</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -554,15 +682,15 @@ function landingView(prefill) {
       <p class="muted" style="margin:.6em 0 0;font-size:.85rem">ふつうは会場のQRコードから入れます</p>
     </div>
   </div>`;
-  let pendingQ = [];
+  let pendingQ = [], pendingImgs = {};
   const fg = $('#lPwForget'); if (fg) fg.onclick = () => { store.del(PW_KEY); landingView(); };
   function applyFile(got, from) {
-    pendingQ = got.questions || [];
+    pendingQ = got.questions || []; pendingImgs = got.images || {};
     if (got.title) $('#lTitle').value = got.title;
     if (got.anon_mode && MODES[got.anon_mode]) { const r = $(`input[name=lMode][value=${got.anon_mode}]`); if (r) r.checked = true; }
     const info = $('#lFileInfo'); info.hidden = false;
-    info.innerHTML = `📋 ${esc(from)}：${pendingQ.length}問の質問を読みこみました（部屋をつくると入ります）<button class="mini" id="lFileX">✕ やめる</button>`;
-    $('#lFileX').onclick = () => { pendingQ = []; info.hidden = true; };
+    info.innerHTML = `📋 ${esc(from)}：${pendingQ.length}問の質問${Object.keys(pendingImgs).length ? `と画像${Object.keys(pendingImgs).length}枚` : ''}を読みこみました（部屋をつくると入ります）<button class="mini" id="lFileX">✕ やめる</button>`;
+    $('#lFileX').onclick = () => { pendingQ = []; pendingImgs = {}; info.hidden = true; };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   $('#lFile').onchange = async e => {
@@ -596,6 +724,7 @@ function landingView(prefill) {
     }
     if (!res.ok) { btn.disabled = false; return toast(errMsg(res.error)); }
     if (pendingQ.length) {
+      if (Object.keys(pendingImgs).length) await putImages(res.code, res.secret, pendingImgs);
       const qr = await API.setQuestions(res.code, res.secret, pendingQ);
       if (!qr.ok) toast('質問を入れられませんでした：' + errMsg(qr.error), 4000);
     }
@@ -662,12 +791,14 @@ function makeStage(el, getW, joinUrl) {
         <div class="col-top"><span data-cnt>0</span><small>人</small></div>
         <div class="col-pct" data-pct>0%</div>
         <div class="col-track"><div class="col-fill" data-fill></div></div>
-        <div class="col-label">${esc(o)}</div>
+        <div class="col-label">${hasOptImgs(run) ? `<div class="cl-img ${run.imgFit === 'cover' ? 'fit-cover' : ''}">${run.optImgs[i] ? imgTag(run.optImgs[i]) : `<span class="noimg">${esc(o)}</span>`}</div>` : ''}${esc(o)}</div>
         ${withNames ? '<div class="col-names" data-names></div>' : ''}
       </div>`).join('')}</div>`;
   }
   function tiles(run) {
     const n = run.options.length, c = n <= 3 ? n : n === 4 ? 2 : 3;
+    if (hasOptImgs(run)) return `<div class="tiles img" style="--cols:${c}">${run.options.map((o, i) => { const id = run.optImgs[i];
+      return `<div class="tile timg" style="--c:${colorOf(i)}"><div class="ti ${run.imgFit === 'cover' ? 'fit-cover' : ''}">${id ? imgTag(id) : `<span class="noimg">${esc(o)}</span>`}</div><b>${esc(o)}</b></div>`; }).join('')}</div>`;
     return `<div class="tiles" style="--cols:${c}">${run.options.map((o, i) => `<div class="tile" style="--c:${colorOf(i)}">${esc(o)}</div>`).join('')}</div>`;
   }
   function timer() { return `<div class="st-timer" data-timer><div class="st-bar"><i data-bar></i></div><div class="st-sec" data-sec></div></div>`; }
@@ -684,7 +815,8 @@ function makeStage(el, getW, joinUrl) {
         </div>
         <div class="st-foot"><span class="st-count">🙋 <b data-pc>0</b>人 参加中</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}：${modeOf(room.anon_mode).desc}</span></div></div>`;
     }
-    const q = `<div class="st-q" data-fit>${esc(run.question)}</div>`;
+    const q = run.img ? `<div class="st-qrow"><div class="st-qimg ${hasOptImgs(run) ? 'sm' : 'big'}">${imgTag(run.img)}</div><div class="st-q" data-fit>${esc(run.question)}</div></div>`
+      : `<div class="st-q" data-fit>${esc(run.question)}</div>`;
     const live = run.reveal === 'live';
     if (screen === 'open' || (screen === 'closing' && live)) return `<div class="st">${q}${timer()}${live ? cols(run, false) : tiles(run)}${foot(room, run)}</div>`;
     if (screen === 'closing' || screen === 'closed') return `<div class="st">${q}<div class="st-big"><b>締め切り！</b><span>${screen === 'closed' ? '結果発表をお待ちください…' : '集計中…'}</span></div>${foot(room, run)}</div>`;
@@ -693,7 +825,8 @@ function makeStage(el, getW, joinUrl) {
   function fit() {
     $$('[data-fit]', el).forEach(q => {
       q.style.fontSize = '';
-      const maxH = el.clientHeight * (q.classList.contains('small') ? 0.16 : 0.3);
+      const inRow = !!q.closest('.st-qrow'), big = inRow && q.closest('.st-qrow').querySelector('.st-qimg.big');
+      const maxH = el.clientHeight * (q.classList.contains('small') ? 0.16 : (!inRow && el.querySelector('.tiles.img')) ? 0.17 : inRow ? (big ? 0.42 : 0.17) : 0.3);
       let fs = parseFloat(getComputedStyle(q).fontSize), guard = 0;
       while (q.scrollHeight > maxH && fs > 10 && guard++ < 30) { fs *= 0.92; q.style.fontSize = fs + 'px'; }
     });
@@ -737,7 +870,7 @@ function makeStage(el, getW, joinUrl) {
     const st = w.room.state || { phase: 'waiting' }, run = st.run, screen = screenOf(st);
     const k = [screen, run && run.id, run && run.reveal, run && run.showCount, w.room.pin, w.room.title, qrReady, el.clientWidth > 0].join('|');
     if (k !== key) {
-      key = k; el.innerHTML = build(screen, w.room, st); fit();
+      key = k; el.innerHTML = build(screen, w.room, st); hydrateImgs(el); fit();
       requestAnimationFrame(() => fill(w, screen));
     } else fill(w, screen);
   }
@@ -749,7 +882,7 @@ function makeStage(el, getW, joinUrl) {
    モニタ表示用ウィンドウ
    ========================================================= */
 function displayView(code) {
-  document.body.className = 'v-disp';
+  document.body.className = 'v-disp'; IMG_ROOM = code;
   const secret = new URLSearchParams(location.hash.slice(1)).get('k') || ((myRooms().find(r => r.code === code) || {}).secret);
   if (!secret) { document.body.className = ''; $('#app').innerHTML = msgPage('🖥', '表示用のカギがありません', 'マスター画面の「表示用ウィンドウを開く」か「表示用URL」から開いてください。'); return; }
   document.title = 'モニタ表示 - みんなでポチッ';
@@ -772,7 +905,7 @@ function displayView(code) {
    参加者（スマホ）
    ========================================================= */
 function participantView(code) {
-  document.body.className = 'v-part';
+  document.body.className = 'v-part'; IMG_ROOM = code;
   const app = $('#app');
   const S = DEMO ? sstore : store; // おためし版はタブごとに別の人になる
   let device = S.get('evapp_device'); if (!device) { device = 'd-' + uid(16); S.set('evapp_device', device); }
@@ -815,11 +948,14 @@ function participantView(code) {
     if (screen === 'waiting') {
       main = `<div class="p-main p-center"><div class="big">🙌</div><h2>参加できました！</h2><p>アンケートが始まるまで、少々お待ちください</p><p style="margin-top:18px"><span class="dots"><i></i><i></i><i></i></span></p></div>`;
     } else if (screen === 'open') {
-      const n = run.options.length, has = my !== undefined;
+      const n = run.options.length, has = my !== undefined, showImg = run.phoneImg !== false, optI = showImg && hasOptImgs(run);
       main = `<div class="p-main">
+        ${showImg && run.img ? `<div class="p-qimg ${optI ? 'small' : ''}">${imgTag(run.img)}<span class="zoom" data-zoom="${run.img}">🔍</span></div>` : ''}
         <div class="p-q">${esc(run.question)}</div>
         <div class="p-timer" id="pTimer"><div class="bar"><i id="pBar"></i></div><span id="pSec"></span></div>
-        <div class="p-opts n${n} ${has ? 'has' : ''}">${run.options.map((o, i) => `<button class="opt ${my === i ? 'sel' : ''}" data-i="${i}" style="--c:${colorOf(i)}">${esc(o)}</button>`).join('')}</div>
+        <div class="p-opts n${n} ${has ? 'has' : ''} ${optI ? 'imgs' : ''}">${run.options.map((o, i) => optI
+          ? `<button class="opt ${my === i ? 'sel' : ''}" data-i="${i}" style="--c:${colorOf(i)}"><div class="oi ${run.imgFit === 'cover' ? 'fit-cover' : ''}">${run.optImgs[i] ? imgTag(run.optImgs[i]) + `<span class="zoom" data-zoom="${run.optImgs[i]}">🔍</span>` : `<span class="noimg">${esc(o)}</span>`}</div><span>${my === i ? '✓ ' : ''}${esc(o)}</span></button>`
+          : `<button class="opt ${my === i ? 'sel' : ''}" data-i="${i}" style="--c:${colorOf(i)}">${esc(o)}</button>`).join('')}</div>
         <div class="p-note ${has ? 'done' : ''}">${has ? '✓ 回答しました。締め切りまで変えられます' : 'ボタンをタップして回答してください'}</div>
       </div>`;
     } else if (st.phase === 'result' && pub.results && Array.isArray(pub.results.counts)) {
@@ -836,7 +972,9 @@ function participantView(code) {
         <p style="margin-top:20px">${st.phase === 'result' ? '結果はモニタを見てね！' : 'モニタに注目！'}</p></div>`;
     }
     app.innerHTML = `<div class="p-wrap">${head()}${main}</div>`;
-    $$('.opt', app).forEach(b => b.onclick = () => choose(+b.dataset.i));
+    $$('.opt', app).forEach(b => b.onclick = e => { const z = e.target.closest('[data-zoom]'); if (z) { e.stopPropagation(); zoomImg(z.dataset.zoom); return; } choose(+b.dataset.i); });
+    $$('.p-qimg [data-zoom]', app).forEach(z => z.onclick = () => zoomImg(z.dataset.zoom));
+    hydrateImgs(app);
     tick();
   }
   function tick() {
@@ -907,7 +1045,8 @@ function cleanQuestion(q, keepId) {
   if (!q || typeof q !== 'object' || !BTN_TYPES[q.type]) return null;
   const c = { id: keepId && /^q[a-z0-9]{4,20}$/.test(q.id) ? q.id : 'q' + uid(8), text: String(q.text || '').slice(0, 200), type: q.type, count: Math.min(6, Math.max(2, q.count | 0 || 4)),
     labels: strArr(q.labels, 6, 24), duration: DURATIONS.some(d => d[0] === +q.duration) ? +q.duration : 30,
-    reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false, phoneResult: q.phoneResult !== false };
+    reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false, phoneResult: q.phoneResult !== false,
+    ...imgFieldsOf(q), imgQ: q.imgQ === 'high' ? 'high' : 'normal' };
   return buildOptions(c).length >= 2 ? c : null;
 }
 const cleanQuestions = (list, keepId) => (Array.isArray(list) ? list : []).slice(0, 300).map(q => cleanQuestion(q, keepId)).filter(Boolean);
@@ -927,12 +1066,12 @@ function parseRecord(obj) {
     return { run_id: String(x.run_id || uid(8)), question: String(x.question || '').slice(0, 300), options, counts,
       total: Math.max(0, +x.total || counts.reduce((a, b) => a + b, 0)), started_at: +x.started_at || 0,
       names: Array.isArray(x.names) ? options.map((_, i) => strArr((x.names[i]), 2000, 40)) : null,
-      settings: { type: BTN_TYPES[st.type] ? st.type : 'custom', duration: +st.duration || 0, reveal: st.reveal === 'live' ? 'live' : 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false } };
+      settings: { type: BTN_TYPES[st.type] ? st.type : 'custom', duration: +st.duration || 0, reveal: st.reveal === 'live' ? 'live' : 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st) } };
   }).filter(Boolean);
   return { app: 'minnade-pochi', kind: 'record', version: 1, code: String(obj.code || '').slice(0, 12), title: String(obj.title || '').slice(0, 60),
-    anon_mode: MODES[obj.anon_mode] ? obj.anon_mode : 'full', saved_at: +obj.saved_at || Date.now(), runs, questions: cleanQuestions(obj.questions) };
+    anon_mode: MODES[obj.anon_mode] ? obj.anon_mode : 'full', saved_at: +obj.saved_at || Date.now(), runs, questions: cleanQuestions(obj.questions), images: sanitizeImages(obj.images) };
 }
-function saveBackup(rec) { if (rec && rec.code && rec.runs.length) store.set(BK_PREFIX + rec.code, rec); }
+function saveBackup(rec) { if (rec && rec.code && rec.runs.length) { const { images, ...rest } = rec; store.set(BK_PREFIX + rec.code, rest); } }
 function delBackup(code) { store.del(BK_PREFIX + code); }
 function listBackups() {
   const out = [];
@@ -941,7 +1080,7 @@ function listBackups() {
 }
 function runToQuestion(run) {
   const st = run.settings || {};
-  const base = { text: run.question, duration: st.duration || 0, reveal: st.reveal || 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false };
+  const base = { text: run.question, duration: st.duration || 0, reveal: st.reveal || 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st) };
   const asType = { ...base, type: st.type, count: run.options.length };
   if (BTN_TYPES[st.type] && st.type !== 'custom' && buildOptions(asType).join('\u0001') === run.options.join('\u0001')) return asType;
   return { ...base, type: 'custom', count: run.options.length, labels: run.options.slice() };
@@ -961,9 +1100,9 @@ function runsHtml(rec, actions, nowId) {
   return rec.runs.map((run, k) => {
     const tot = run.total, max = Math.max(1, ...run.counts), st = run.settings || {};
     return `<div class="hrun ${run.run_id === nowId ? 'now' : ''}">
-      <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
+      <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${imgTag(st.img, 'othumb')}${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
       <div class="chips" style="margin-bottom:6px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">${run.options.length}択</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">回答 ${tot}人</span></div>
-      ${run.options.map((o, i) => `<div class="ores-row" style="--c:${colorOf(i)}"><span class="ores-lab">${esc(o)}</span><span class="ores-bar"><i style="width:${run.counts[i] / max * 100}%"></i></span><span class="ores-n">${run.counts[i]}人 <small>${tot ? Math.round(run.counts[i] * 100 / tot) : 0}%</small></span>
+      ${run.options.map((o, i) => `<div class="ores-row" style="--c:${colorOf(i)}"><span class="ores-lab">${imgTag((st.optImgs || [])[i], 'othumb')}${esc(o)}</span><span class="ores-bar"><i style="width:${run.counts[i] / max * 100}%"></i></span><span class="ores-n">${run.counts[i]}人 <small>${tot ? Math.round(run.counts[i] * 100 / tot) : 0}%</small></span>
         ${run.names && run.names[i] && run.names[i].length ? `<div class="ores-names">${esc(run.names[i].join('、'))}</div>` : ''}</div>`).join('')}
     </div>`;
   }).join('');
@@ -975,9 +1114,9 @@ function questionsFromFile(obj) {
     const rec = parseRecord(obj); if (!rec) return null;
     let qs = rec.questions;
     if (!qs.length) { const seen = new Set(); qs = cleanQuestions(rec.runs.map(runToQuestion).filter(q => { const k = q.text + '\u0001' + buildOptions(q).join('\u0001'); if (seen.has(k)) return false; seen.add(k); return true; })); }
-    return { questions: qs, title: rec.title, anon_mode: rec.anon_mode };
+    return { questions: qs, title: rec.title, anon_mode: rec.anon_mode, images: rec.images };
   }
-  if (Array.isArray(obj.questions)) return { questions: cleanQuestions(obj.questions), title: typeof obj.title === 'string' ? obj.title.slice(0, 40) : '', anon_mode: MODES[obj.anon_mode] ? obj.anon_mode : null };
+  if (Array.isArray(obj.questions)) return { questions: cleanQuestions(obj.questions), title: typeof obj.title === 'string' ? obj.title.slice(0, 40) : '', anon_mode: MODES[obj.anon_mode] ? obj.anon_mode : null, images: sanitizeImages(obj.images) };
   return null;
 }
 function importQuestions(list) {
@@ -997,9 +1136,11 @@ function recordView(rec, fromBackup) {
     ${rec.questions.length ? `<div class="card"><h3>📋 このときの質問リスト（${rec.questions.length}問）</h3>
       ${rec.questions.map(q => `<div class="qitem"><div class="qt"><b>${esc(q.text || '（質問文なし）')}</b><div class="chips">${qChips(q)}</div></div></div>`).join('')}</div>` : ''}
   </div>`;
+  Object.entries(rec.images || {}).forEach(([k, v]) => IMG.set(k, v)); hydrateImgs($('#app'));
   $('#rvBack').onclick = () => landingView();
   $('#rvCsv').onclick = () => download(recName(rec, 'csv'), recordCsv(rec), 'text/csv');
   $('#rvJson').onclick = () => download(recName(rec, 'json'), JSON.stringify(rec, null, 2), 'application/json');
+  if (fromBackup && idsOfRecord(rec).length) $('#rvRuns').insertAdjacentHTML('beforebegin', '<p class="muted" style="font-size:.82rem;margin-top:0">※ このPCの控えには画像は入っていません（記録ファイルには入ります）</p>');
   $('#rvNew').onclick = () => { const f = questionsFromFile(rec); if (f) landingView({ ...f, from: rec.title || '記録ファイル' }); };
 }
 
@@ -1014,7 +1155,7 @@ const saveBank = b => { ROOM_BANK = b.slice(); if (bankSaver) bankSaver(); };
 const durName = v => (DURATIONS.find(d => d[0] === v) || [0, v + '秒'])[1];
 function qChips(q) {
   const ops = buildOptions(q);
-  return `<span class="chip">${ops.length}択：${esc(ops.join('・'))}</span><span class="chip">⏱ ${durName(q.duration)}</span><span class="chip">${q.reveal === 'live' ? '📊 投票中も見せる' : '🎁 あとで発表'}</span>${q.showCount ? '' : '<span class="chip">人数かくす</span>'}${q.phoneResult !== false ? '<span class="chip">📱 スマホにも結果</span>' : ''}`;
+  return `<span class="chip">${ops.length}択：${esc(ops.join('・'))}</span><span class="chip">⏱ ${durName(q.duration)}</span><span class="chip">${q.reveal === 'live' ? '📊 投票中も見せる' : '🎁 あとで発表'}</span>${q.showCount ? '' : '<span class="chip">人数かくす</span>'}${q.phoneResult !== false ? '<span class="chip">📱 スマホにも結果</span>' : ''}${q.img || hasOptImgs(q) ? '<span class="chip">🖼 画像あり</span>' : ''}`;
 }
 function qFields(p, quick) {
   return `
@@ -1030,20 +1171,51 @@ function qFields(p, quick) {
     </div>
     <label class="chk"><input type="checkbox" id="${p}Show" checked> 回答人数（例：37 / 42人）をモニタに出す</label>
     <label class="chk"><input type="checkbox" id="${p}Phone" checked> 結果発表のとき、参加者のスマホにもグラフを出す</label>
-    <div class="btnprev" id="${p}Prev"></div>`;
+    ${quick ? `<div class="btnprev" id="${p}Prev"></div>` : `<div class="imgbox" id="${p}ImgBox"><span>🖼 画像（どれも任意）</span>
+      <div class="imgrow"><div id="${p}QImg"></div><small class="muted">質問の画像<br>（モニタの質問の横に出ます）</small></div>
+      <div class="optimgs" id="${p}OptImgs"></div>
+      <div class="f2">
+        <label class="f"><span>画質（これから選ぶ画像に）</span><select id="${p}ImgQ"><option value="normal">ふつう（軽い）</option><option value="high">きれい（文字が多い図に）</option></select></label>
+        <label class="f"><span>選択肢の画像の見せ方</span><select id="${p}ImgFit"><option value="contain">🖼 全体を見せる</option><option value="cover">✂️ 枠いっぱい</option></select></label>
+      </div>
+      <label class="chk" style="margin:0"><input type="checkbox" id="${p}PhoneImg" checked> スマホにも画像を出す</label>
+      <input type="file" accept="image/*" id="${p}File" hidden>
+    </div>`}`;
 }
 function qForm(p, root) {
   const g = id => root.querySelector('#' + p + id);
+  const im = { img: null, optImgs: [] };
+  let pick = null;
+  const slot = (id, target) => id ? `<div class="imgthumb">${imgTag(id)}<button data-imgdel="${target}" title="画像をはずす">✕</button></div>` : `<button class="imgadd" data-imgpick="${target}">＋画像</button>`;
+  let imgKey = '';
+  function renderImgs(ops) {
+    if (!g('ImgBox')) return;
+    const k = JSON.stringify([ops, im.img, im.optImgs.slice(0, ops.length)]);
+    if (k === imgKey) return; imgKey = k;
+    g('QImg').innerHTML = slot(im.img, 'q');
+    g('OptImgs').innerHTML = ops.map((o, i) => `<div class="optimg"><span class="bp" style="--c:${colorOf(i)}">${esc(o)}</span>${slot(im.optImgs[i], i)}</div>`).join('');
+    hydrateImgs(g('ImgBox'));
+  }
   const api = {
+    onImage: null,
     read() {
-      return { text: g('Text').value.trim(), type: g('Type').value, count: +g('Count').value,
+      const base = { text: g('Text').value.trim(), type: g('Type').value, count: +g('Count').value,
         labels: g('LabelsWrap') ? $$('[data-lbl]', g('LabelsWrap')).map(i => i.value.trim()) : [],
         duration: +g('Dur').value, reveal: g('Reveal').value, showCount: g('Show').checked, phoneResult: g('Phone').checked };
+      if (g('ImgBox')) {
+        const n = buildOptions(base).length;
+        Object.assign(base, { img: im.img, optImgs: im.optImgs.slice(0, n), imgFit: g('ImgFit').value, imgQ: g('ImgQ').value, phoneImg: g('PhoneImg').checked });
+      }
+      return base;
     },
     write(q) {
       g('Text').value = q.text || ''; g('Type').value = q.type || 'yesno'; g('Count').value = String(q.count || 4);
       if (g('LabelsWrap')) $$('[data-lbl]', g('LabelsWrap')).forEach((i, k) => i.value = (q.labels || [])[k] || '');
       g('Dur').value = String(q.duration ?? 30); g('Reveal').value = q.reveal || 'after'; g('Show').checked = q.showCount !== false; g('Phone').checked = q.phoneResult !== false;
+      if (g('ImgBox')) {
+        im.img = IMG_ID_RE.test(q.img || '') ? q.img : null; im.optImgs = (q.optImgs || []).slice();
+        g('ImgFit').value = q.imgFit === 'cover' ? 'cover' : 'contain'; g('ImgQ').value = q.imgQ === 'high' ? 'high' : 'normal'; g('PhoneImg').checked = q.phoneImg !== false;
+      }
       api.sync();
     },
     sync() {
@@ -1051,9 +1223,28 @@ function qForm(p, root) {
       g('CountWrap').hidden = !t.gen;
       if (g('LabelsWrap')) g('LabelsWrap').hidden = g('Type').value !== 'custom';
       const ops = buildOptions(api.read());
-      g('Prev').innerHTML = ops.length ? ops.map((o, i) => `<span class="bp" style="--c:${colorOf(i)}">${esc(o)}</span>`).join('') : '<small>ボタンの文字を2つ以上入れてください</small>';
+      if (g('Prev')) g('Prev').innerHTML = ops.length ? ops.map((o, i) => `<span class="bp" style="--c:${colorOf(i)}">${esc(o)}</span>`).join('') : '<small>ボタンの文字を2つ以上入れてください</small>';
+      if (g('ImgBox')) { renderImgs(ops); if (!ops.length) g('OptImgs').innerHTML = '<small>ボタンの文字を2つ以上入れてください</small>'; }
     },
   };
+  if (g('ImgBox')) {
+    root.addEventListener('click', e => {
+      const pk = e.target.closest('[data-imgpick]'), dl = e.target.closest('[data-imgdel]');
+      if (pk) { e.preventDefault(); pick = pk.dataset.imgpick; g('File').click(); }
+      else if (dl) { e.preventDefault(); const t = dl.dataset.imgdel; if (t === 'q') im.img = null; else im.optImgs[+t] = null; api.sync(); }
+    });
+    g('File').onchange = async e => {
+      const f = e.target.files[0]; e.target.value = ''; if (!f || pick === null) return;
+      const target = pick; pick = null;
+      const [edge, qual] = IMG_SIZES[target === 'q' ? 'q' : 'o'][g('ImgQ').value === 'high' ? 'high' : 'normal'];
+      let data;
+      try { data = await compressImage(f, edge, qual); } catch { return toast('この画像は読みこめませんでした（JPEG・PNGがおすすめ）', 4000); }
+      const id = await hashData(data); IMG.set(id, data);
+      if (api.onImage && !(await api.onImage(id, data))) return;
+      if (target === 'q') im.img = id; else im.optImgs[+target] = id;
+      api.sync(); toast(`${fmtKB(f.size)} → ${fmtKB(Math.round((data.length - 23) * 0.75))} に圧縮しました`);
+    };
+  }
   root.addEventListener('input', e => { if (e.target.id && e.target.id.startsWith(p) || e.target.dataset.lbl) api.sync(); });
   root.addEventListener('change', e => { if (e.target.id && e.target.id.startsWith(p)) api.sync(); });
   api.sync();
@@ -1061,7 +1252,7 @@ function qForm(p, root) {
 }
 
 function operatorView(code) {
-  document.body.className = 'v-op';
+  document.body.className = 'v-op'; IMG_ROOM = code;
   const app = $('#app');
   const hashKey = new URLSearchParams(location.hash.slice(1)).get('k');
   const mine = myRooms().find(r => r.code === code);
@@ -1213,14 +1404,15 @@ function operatorView(code) {
     if (options.length < 2) return toast('ボタンは2つ以上必要です');
     const st = cur();
     if (st.phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って次を出しますか？')) return;
-    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options, settings: { type: q.type, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false } };
-    const ok = await push({ phase: 'open', run: { id: run.id, question: run.question, options: run.options, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, qid: q.id || null } }, q.duration, run);
+    const imf = imgFieldsOf(q); imf.optImgs = imf.optImgs.slice(0, options.length);
+    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options, settings: { type: q.type, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf } };
+    const ok = await push({ phase: 'open', run: { id: run.id, question: run.question, options: run.options, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf, qid: q.id || null } }, q.duration, run);
     if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
   }
   function closeNow() { const st = cur(); if (st.phase !== 'open') return; push({ ...st, phase: st.run.reveal === 'live' ? 'result' : 'closed' }); }
   function reveal() { const st = cur(); if (st.run) push({ ...st, phase: 'result' }); }
   function backToWait() { push({ phase: 'waiting' }); }
-  function again() { const r = cur().run; if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false }); }
+  function again() { const r = cur().run; if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false, ...imgFieldsOf(r) }); }
 
   setInterval(() => {
     const st = cur();
@@ -1263,6 +1455,7 @@ function operatorView(code) {
     if (!lastRec) return;
     const st = cur(), nowId = st.run && st.phase !== 'waiting' ? st.run.id : null;
     const rec = { ...lastRec, runs: lastRec.runs.slice().reverse() };
+    setTimeout(() => hydrateImgs($('#histList')), 0);
     $('#histList').innerHTML = `<div class="card">${runsHtml(rec, run => `<button class="primary" data-show="${esc(run.run_id)}">🖥 結果をモニタに出す</button><button data-reask="${esc(run.run_id)}">🔁 もう一度出題</button>`, nowId)}</div>`;
     $$('[data-show]', $('#histList')).forEach(b => b.onclick = () => showOnMonitor(lastRec.runs.find(r => r.run_id === b.dataset.show)));
     $$('[data-reask]', $('#histList')).forEach(b => b.onclick = () => { const r = lastRec.runs.find(x => x.run_id === b.dataset.reask); if (r) ask(runToQuestion(r)); });
@@ -1271,7 +1464,7 @@ function operatorView(code) {
     if (!run) return;
     if (cur().phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って、この結果をモニタに出しますか？')) return;
     const s = run.settings || {};
-    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, phoneResult: s.phoneResult !== false, replay: true } })) toast('モニタに結果を出しました');
+    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, phoneResult: s.phoneResult !== false, ...imgFieldsOf(s), replay: true } })) toast('モニタに結果を出しました');
   }
   function histTick() {
     const st = cur();
@@ -1317,6 +1510,11 @@ function operatorView(code) {
     $$('[data-ask]', $('#bankRun')).forEach(b => b.onclick = () => { const q = loadBank().find(x => x.id === b.dataset.ask); if (q) ask(q); });
   }
   const ed = qForm('ed', $('#ed'));
+  ed.onImage = async (id, data) => {
+    const r = await API.putImage(code, secret, id, data);
+    if (!r.ok) { toast('画像を保存できませんでした：' + errMsg(r.error), 4000); return false; }
+    return true;
+  };
   let editing = null;
   function renderBankEdit() {
     const bank = loadBank();
@@ -1348,17 +1546,20 @@ function operatorView(code) {
     saveBank(bank); toast(editing ? '上書き保存しました' : '保存しました'); resetEd(); renderBanks();
   };
   $('#edNew').onclick = resetEd;
-  $('#bankExp').onclick = () => {
+  $('#bankExp').onclick = async () => {
     const bank = loadBank(); if (!bank.length) return toast('書き出す質問がありません');
+    const images = await collectImages(idsOfQuestions(bank));
     const d = new Date();
     const nm = ((w.room && w.room.title) || 'アンケート').replace(/[\\/:*?"<>|\s]+/g, '_');
-    download(`質問セット_${nm}_${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`, JSON.stringify({ app: 'minnade-pochi', kind: 'questions', version: 2, title: (w.room && w.room.title) || '', anon_mode: w.room && w.room.anon_mode, questions: bank }, null, 2), 'application/json');
+    download(`質問セット_${nm}_${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`, JSON.stringify({ app: 'minnade-pochi', kind: 'questions', version: 2, title: (w.room && w.room.title) || '', anon_mode: w.room && w.room.anon_mode, questions: bank, images }, null, 2), 'application/json');
   };
   $('#bankImp').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try {
       const got = questionsFromFile(JSON.parse(await f.text()));
-      if (!got || !importQuestions(got.questions)) throw 0;
+      if (!got || !got.questions.length) throw 0;
+      await putImages(code, secret, got.images);
+      if (!importQuestions(got.questions)) throw 0;
       renderBanks();
     } catch { toast('読みこめませんでした（このアプリで書き出したファイルを選んでね）'); }
   };
@@ -1394,7 +1595,8 @@ function operatorView(code) {
     const get = async () => {
       const res = await API.exportAll(code, secret); if (!res.ok) { toast(errMsg(res.error)); return null; }
       const rec = makeRecord(res, code); lastRec = rec; if (backupOn()) saveBackup(rec);
-      if (!rec.runs.length) { toast('まだ結果がありません'); return null; } return rec;
+      if (!rec.runs.length) { toast('まだ結果がありません'); return null; }
+      rec.images = await collectImages(idsOfRecord(rec)); return rec;
     };
     $('#sJson', m).onclick = async () => { const r = await get(); if (r) { download(recName(r, 'json'), JSON.stringify(r, null, 2), 'application/json'); m.remove(); } };
     $('#sCsv', m).onclick = async () => { const r = await get(); if (r) { download(recName(r, 'csv'), recordCsv(r), 'text/csv'); m.remove(); } };
