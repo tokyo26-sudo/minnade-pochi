@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.10</title>
+<title>みんなでポチッ v0.11</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -298,6 +298,33 @@ img[data-img]:not([src]){visibility:hidden}
 .st-pick-body.center{text-align:center}
 .st-pick-name{text-align:right;font-size:min(5cqh,3.4cqw);font-weight:800;color:#5b6478;margin-top:2cqh}
 .st-qrow.pk{margin-bottom:0}
+.st-q.hidq{color:#ffd54a}
+.st-wmain{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:5cqw}
+.st-wmsg{display:flex;flex-direction:column;align-items:center;gap:2.4cqh;text-align:center}
+.st-wmsg b{font-size:min(10cqh,6.4cqw);color:#ffd54a;font-weight:900;line-height:1.2;animation:pop .35s ease}
+.st-wmsg span{font-size:3.6cqh;opacity:.8}
+.st-wimg{align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:0;max-width:56cqw}
+.st-wimg img{max-width:100%;max-height:100%;object-fit:contain;display:block;border-radius:1.6cqh}
+.st-wjoin{display:flex;align-items:center;gap:2.4cqw;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:2.6cqh;padding:2.6cqh 2.6cqw;flex:none}
+.st-wqr{background:#fff;padding:1.2cqh;border-radius:1.6cqh;height:min(36cqh,24cqw);aspect-ratio:1;flex:none}
+.st-wqr img{width:100%;height:100%;display:block;image-rendering:pixelated}
+.st-wtop{font-size:3.8cqh;font-weight:900;color:#ffd54a;margin-bottom:1.4cqh}
+.st-wlead{font-size:3.4cqh;font-weight:800;line-height:1.35;margin-bottom:1.6cqh}
+.st-wjoin .st-pin{font-size:min(11cqh,7cqw)}
+.st-tthead{margin-bottom:1.6cqh}
+.st-ttwrap{flex:1;min-height:0;position:relative}
+.st-tt{position:absolute;inset:0;overflow-y:auto;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));align-content:start;scrollbar-width:none}
+.st-tt::-webkit-scrollbar{display:none}
+.tt{background:#fff;color:#1d2433;border-radius:1.6cqh;border-left:1.1cqh solid var(--c);padding:.8cqh 1cqw;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;box-shadow:0 .6cqh 0 rgba(0,0,0,.28)}
+.tt.anim{animation:ttpop .4s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes ttpop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.tt-b{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.tt-b span{font-weight:900;line-height:1.25;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%}
+.tt-n{font-size:max(11px,calc(var(--th,100px)*.13));color:#5b6478;font-weight:800;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
+.st-more{position:absolute;left:50%;transform:translateX(-50%);bottom:-6.6cqh;background:#ffd54a;color:#1d2433;border-radius:99px;padding:.5cqh 1.6cqw;font-weight:900;font-size:2.6cqh;box-shadow:0 .4cqh 1cqh rgba(0,0,0,.4)}
+.p-badge{display:inline-flex;align-items:center;gap:.35em;align-self:center;margin:0 auto 10px;font-size:.84rem;font-weight:800;border-radius:99px;padding:.3em .9em;background:#fff;border:2px solid #f0dcc4;color:#6b4e2e}
+.p-badge.named{background:#fff1ec;border-color:var(--brand);color:#c2381a}
+.p-badge.full{background:#eef6f1;border-color:#9fd3b5;color:#1f7a4a}
 .p-txt{font-size:1.1rem;line-height:1.55;min-height:7.6em;border-width:2px;border-color:#f0c9a8}
 .p-txtbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
 .p-left{font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums;font-size:.92rem}
@@ -446,6 +473,8 @@ const MODES = {
   named:  { icon: '📢', name: '記名',     desc: '選んだ人の名前がモニタに表示されます' },
 };
 const modeOf = m => MODES[m] || MODES.full;
+// 名前のあつかいは質問ごと（古い質問・未設定は部屋の最初の設定）
+const runAnon = (o, roomMode) => MODES[o && o.anon] ? o.anon : (MODES[roomMode] ? roomMode : 'full');
 const ERR = {
   bad_password: 'マスターパスワードがちがいます', no_password_set: 'サーバーにマスターパスワードが設定されていません（README参照）',
   bad_pin: 'カギの数字がちがいます', bad_name: '名前は1〜20文字で入れてください', no_room: '部屋が見つかりません（終了したか、24時間たって消えました）',
@@ -606,6 +635,7 @@ const SFX = (() => {
     seikai(t) { [0, 0.42].forEach(o => { bell(t + o, 988, 0.5, 0.3); bell(t + o + 0.16, 784, 0.7, 0.3); }); },
     fuseikai(t) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.connect(master); tone(t, 140, 0.9, { type: 'sawtooth', gain: 0.35, out: lp, attack: 0.01 }); },
     tick(t, fast) { tone(t, fast ? 1400 : 1100, 0.05, { type: 'square', gain: 0.08 }); },
+    pon(t) { const f = 520 + Math.random() * 420; tone(t, f, 0.14, { gain: 0.22, attack: 0.003 }); tone(t, f * 2.01, 0.07, { gain: 0.07, attack: 0.002 }); },
   };
   const LOG = /[?&]sfxlog/.test(location.search) ? (window.__sfxLog = []) : null;
   const log = (a, n, src) => { if (LOG) LOG.push([Math.round(performance.now()), a, n, src]); };
@@ -653,7 +683,7 @@ const HELP_PART = `
     <li>名前（ニックネームでOK）と、モニタに出ているカギの数字（4ケタ）を入れます</li>
     <li>質問が出たら、ボタンを押して回答します。締め切りまでは何度でも変えられます</li>
     <li>「自由に書く」質問では、文章を書いて「送信する」を押します（${TEXT_MAX}文字まで）。締め切りまでは直せます</li>
-    <li>画面の上に、名前のあつかい（完全匿名・匿名・記名）が表示されています</li>
+    <li>質問の上に、その質問の名前のあつかい（🔒 完全匿名・👤 匿名・📢 記名）が表示されます。答える前に確認してください</li>
   </ol>`;
 const HELP_MASTER = `<div class="help">
   <h2>📖 みんなでポチッ　使い方</h2>
@@ -666,13 +696,13 @@ const HELP_MASTER = `<div class="help">
   </ul>
   <h3>はじめての準備（マスター）</h3>
   <h4>1. 部屋をつくる</h4>
-  <p>トップで部屋の名前と「名前のあつかい」を選び、「部屋をつくる」を押します。</p>
+  <p>トップで部屋の名前と「名前のあつかいの最初の設定」を選び、「部屋をつくる」を押します。</p>
   <ul>
-    <li>🔒 完全匿名：だれが何を選んだか、マスターにもわかりません</li>
+    <li>🔒 完全匿名：だれが何を答えたか、マスターにもわかりません</li>
     <li>👤 匿名：名前はマスターだけが見られます</li>
-    <li>📢 記名：選んだ人の名前がモニタに出ます</li>
+    <li>📢 記名：答えた人の名前がモニタに出ます</li>
   </ul>
-  <p class="note">※名前のあつかいは、部屋をつくったあとは変えられません。部屋の名前は、操作画面の上の ✏️ であとから変えられます。<br>※「このPCで覚える」に印を付けると、次からパスワードの入力がいりません（共用PCでは外してください）。</p>
+  <p class="note">※名前のあつかいは<b>質問ごと</b>に選べます（部屋の設定は、新しい質問の最初の値）。参加者のスマホには、質問の上に毎回表示されます。出題したあとは、その質問のあつかいは変えられません。部屋の名前は、操作画面の上の ✏️ であとから変えられます。<br>※「このPCで覚える」に印を付けると、次からパスワードの入力がいりません（共用PCでは外してください）。</p>
   <h4>2. モニタに映す</h4>
   <p>PCとモニタを「拡張」でつなぎ（Windows：Win＋P → 拡張／Mac：ミラーリングをオフ）、「🖥 表示用ウィンドウを開く」を押します。開いたウィンドウをモニタ側へ動かし、ダブルクリック（またはFキー）で全画面にします。</p>
   <p class="note">🔊 効果音を鳴らすには、表示用ウィンドウを一度クリックしてください（ブラウザの決まりで、さわるまで音が出せません）。左下に「音をオンにする」が出ているときは、まだ音が出ない状態です。</p>
@@ -696,6 +726,14 @@ const HELP_MASTER = `<div class="help">
     <li>名前：📢 記名の部屋 → モニタにも名前が出ます／👤 匿名の部屋 → マスターだけ見えます／🔒 完全匿名の部屋 → だれにもわかりません（名前を出したいときは「文の最後に名前を書いてね」と案内してください）</li>
     <li>休憩中に集めて、あとで読むこともできます：休憩前に出題（制限時間は「制限なし」がおすすめ）→ 休憩が終わったら「⏹ 締め切る」→ ほかのアンケートを進める → 最後に「📜 履歴」タブで、その質問の文章をえらんで「🖥 モニタに出す」</li>
     <li>大喜利は、質問に「お題の画像」を付けると、モニタで答えといっしょに出ます</li>
+    <li>受付中のモニタには、参加用のQRコードとカギの数字も出ます（途中からでも参加できます）</li>
+    <li><b>🧱 ぜんぶタイルで出す</b>：とどいた文章を来た順にポポポンとならべます（記名の質問なら名前も）。多いときは操作画面の「▲ 上へ／▼ 下へ」、または表示用ウィンドウの上でマウスホイール・↑↓キーで動かします</li>
+  </ul>
+  <h3>❓ 質問文をかくす（答えから質問を当てるゲームなど）</h3>
+  <ul>
+    <li>質問をつくるときに「モニタに質問文を出さない」に印を付けると、モニタには「❓ 何の質問でしょう？」と出ます（参加者のスマホには質問が出ます）</li>
+    <li>操作画面の「🎉 質問を発表！」で、モニタに質問文を出します（ジャン！と鳴ります）。とちゅうで「❓ モニタの質問文をかくす」にもできます</li>
+    <li>例：壇上の人が目隠しをしているあいだに「免許をとった年齢は？」を自由に書くで集める → タイルで出して → 何の数字か当ててもらう</li>
   </ul>
   <h3>効果音</h3>
   <ul>
@@ -756,12 +794,14 @@ function makeLocalServer() {
   const newPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
   const isTxt = run => !!run && (run.settings || {}).type === 'text';
   function textList(r, runId, withNames) {
+    withNames = withNames && runAnon((r.runs[runId] || {}).settings, r.anon_mode) !== 'full';
     return Object.entries((r.texts || {})[runId] || {}).sort((a, b) => a[1].t - b[1].t)
       .map(([k, v]) => ({ eid: v.eid, body: v.body, name: withNames && r.participants[k] ? r.participants[k].name : null, at: v.t, edited: v.u > v.t + 1000 }));
   }
   function tally(r, runId, withNames) {
     const run = r.runs[runId]; if (!run) return null;
     if (isTxt(run)) return { counts: [], total: Object.keys((r.texts || {})[runId] || {}).length, names: null };
+    withNames = withNames && runAnon(run.settings, r.anon_mode) !== 'full';
     const n = run.options.length, counts = Array(n).fill(0), names = withNames ? Array.from({ length: n }, () => []) : null;
     const entries = Object.entries(r.votes[runId] || {}).sort((a, b) => a[1].t - b[1].t);
     for (const [k, v] of entries) { counts[v.c]++; if (names) { const p = r.participants[k]; if (p) names[v.c].push(p.name); } }
@@ -805,7 +845,7 @@ function makeLocalServer() {
       if (st.phase !== 'open' || !st.run || st.run.id !== runId || !isTextRun(st.run)) return ng('closed');
       if (st.ends_at && Date.now() > st.ends_at + 1500) return ng('closed');
       const b = cleanBody(body); if (textLen(b) > TEXT_MAX) return ng('too_long');
-      const key = r.anon_mode === 'full' ? voterKey : device;
+      const key = runAnon((r.runs[runId] || {}).settings, r.anon_mode) === 'full' ? voterKey : device;
       const m = ((r.texts ||= {})[runId] ||= {});
       if (!b) { delete m[key]; save(db); return ok({ deleted: true }); }
       const now = Date.now();
@@ -814,7 +854,7 @@ function makeLocalServer() {
     },
     async getTexts(code, secret, runId) {
       const r = auth(load(), code, secret); if (!r) return ng('no_room');
-      return ok({ texts: textList(r, runId, r.anon_mode !== 'full') });
+      return ok({ texts: textList(r, runId, true) });
     },
     async removeBots(code, secret) {
       const db = load(); const r = auth(db, code, secret); if (!r) return ng('no_room');
@@ -851,19 +891,19 @@ function makeLocalServer() {
       if (st.phase !== 'open' || !st.run || st.run.id !== runId) return ng('closed');
       if (st.ends_at && Date.now() > st.ends_at + 1500) return ng('closed');
       if (!(choice >= 0 && choice < st.run.options.length)) return ng('bad_choice');
-      const key = r.anon_mode === 'full' ? voterKey : device;
+      const key = runAnon((r.runs[runId] || {}).settings, r.anon_mode) === 'full' ? voterKey : device;
       (r.votes[runId] ||= {})[key] = { c: choice, t: Date.now() }; save(db); return ok({});
     },
     async results(code, secret, runId) {
       const r = auth(load(), code, secret); if (!r) return ng('no_room');
-      const t = tally(r, runId, r.anon_mode !== 'full'); if (!t) return ng('no_run');
+      const t = tally(r, runId, true); if (!t) return ng('no_run');
       return ok({ ...t, participants: Object.keys(r.participants).length });
     },
     async exportAll(code, secret) {
       const r = auth(load(), code, secret); if (!r) return ng('no_room');
       const runs = Object.entries(r.runs).sort((a, b) => a[1].started_at - b[1].started_at)
-        .map(([id, x]) => ({ run_id: id, question: x.question, options: x.options, settings: x.settings || {}, started_at: x.started_at, ...tally(r, id, r.anon_mode !== 'full'),
-          ...(isTxt(x) ? { texts: textList(r, id, r.anon_mode !== 'full') } : {}) }));
+        .map(([id, x]) => ({ run_id: id, question: x.question, options: x.options, settings: { ...(x.settings || {}), anon: runAnon(x.settings, r.anon_mode) }, started_at: x.started_at, ...tally(r, id, true),
+          ...(isTxt(x) ? { texts: textList(r, id, true) } : {}) }));
       return ok({ title: r.title, anon_mode: r.anon_mode, runs });
     },
     async closeRoom(code, secret) { const db = load(); if (auth(db, code, secret)) delete db.rooms[code.toUpperCase()]; save(db); return ok({}); },
@@ -935,12 +975,12 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.10</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート <small>v0.11</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
       <label class="f"><span>部屋の名前（モニタに出ます）</span><input id="lTitle" maxlength="40" placeholder="例：秋の交流会"></label>
-      <div class="f"><span>名前のあつかい（部屋をつくったあとは変えられません）</span>
+      <div class="f"><span>名前のあつかいの最初の設定（質問ごとに変えられます）</span>
         <div class="modes">${Object.entries(MODES).map(([k, m]) => `<label class="mode"><input type="radio" name="lMode" value="${k}" ${k === 'master' ? 'checked' : ''}><div><b>${m.icon} ${m.name}</b><br><small>${m.desc}</small></div></label>`).join('')}</div>
       </div>
       <div class="f"><span>質問を前もって用意したとき（任意）</span><label class="btn">📂 ファイルから読みこむ<input type="file" id="lFile" accept=".json,application/json" hidden></label>
@@ -1057,13 +1097,13 @@ function makeWatcher(code, secret, onUpdate) {
 /* =========================================================
    ステージ（モニタに映す画面）— 表示用ウィンドウとマスターのプレビューで共通
    ========================================================= */
-function makeStage(el, getW, joinUrl, getHold) {
+function makeStage(el, getW, joinUrl, getHold, opts = {}) {
   el.classList.add('stage');
-  let key = '';
+  let key = '', animTk = null, scrollKey = '';
   function screenOf(st) {
     if (!st || st.phase === 'waiting' || !st.run) return 'waiting';
     if (st.phase === 'open') return st.ends_at && Clock.now() >= st.ends_at ? 'closing' : 'open';
-    if (isTextRun(st.run) && st.phase !== 'open') return st.phase === 'result' && st.pick ? 'pick' : 'closed';
+    if (isTextRun(st.run)) return st.phase === 'result' && st.view === 'tiles' ? 'tiles' : st.phase === 'result' && st.pick ? 'pick' : 'closed';
     if (st.phase === 'result') {
       const h = getHold && getHold();
       if ((st.reveal_at && Clock.now() < st.reveal_at) || (h && h.rk === st.rk && Date.now() < h.until)) return 'rolling';
@@ -1071,8 +1111,16 @@ function makeStage(el, getW, joinUrl, getHold) {
     }
     return 'closed';
   }
+  // 質問文をかくしているときは「何の質問でしょう？」（画像もかくす）
+  const qtxt = run => run.hideQ ? '❓ 何の質問でしょう？' : run.question;
+  const qimg = run => run.hideQ ? null : run.img;
+  function qHead(run, size, small) {
+    const im = qimg(run), qq = `<div class="st-q ${small ? 'small' : ''} ${run.hideQ ? 'hidq' : ''}" data-fit>${esc(qtxt(run))}</div>`;
+    return im ? `<div class="st-qrow ${small ? 'pk' : ''}"><div class="st-qimg ${size}">${imgTag(im)}</div>${qq}</div>` : qq;
+  }
   function foot(room, run) {
-    return `<div class="st-foot"><span>${run && run.showCount ? (isTextRun(run) ? `📮 とどいた <b data-tot>0</b>件` : `回答 <b data-tot>0</b> / <b data-pc>0</b>人`) : ''}</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}</span></div>`;
+    const m = modeOf(runAnon(run, room.anon_mode));
+    return `<div class="st-foot"><span>${run && run.showCount ? (isTextRun(run) ? `📮 とどいた <b data-tot>0</b>件` : `回答 <b data-tot>0</b> / <b data-pc>0</b>人`) : ''}</span><span class="st-mode">${m.icon} ${m.name}</span></div>`;
   }
   function cols(run, withNames) {
     return `<div class="cols" style="--n:${run.options.length}">${run.options.map((o, i) => `
@@ -1091,6 +1139,20 @@ function makeStage(el, getW, joinUrl, getHold) {
     return `<div class="tiles" style="--cols:${c}">${run.options.map((o, i) => `<div class="tile" style="--c:${colorOf(i)}">${esc(o)}</div>`).join('')}</div>`;
   }
   function timer() { return `<div class="st-timer" data-timer><div class="st-bar"><i data-bar></i></div><div class="st-sec" data-sec></div></div>`; }
+  const ttCols = n => n <= 3 ? Math.max(1, n) : n === 4 ? 2 : n <= 9 ? 3 : n <= 12 ? 4 : n <= 20 ? 5 : 6;
+  function textTilesStage(room, st, list) {
+    const run = st.run, named = runAnon(run, room.anon_mode) === 'named';
+    const head = `<div class="st-tthead">${qHead(run, 'sm', true)}</div>`;
+    if (!list) return `<div class="st">${head}<div class="st-big"><span>読みこみ中…</span></div></div>`;
+    if (!list.length) return `<div class="st">${head}<div class="st-big"><b>📮</b><span>まだ1件もとどいていません</span></div></div>`;
+    const n = list.length, c = ttCols(n), rv = Math.min(Math.ceil(n / c), 5);
+    const anim = animTk !== st.tk, step = Math.min(220, Math.max(25, Math.round(4500 / n)));
+    if (anim) { animTk = st.tk; if (opts.onTiles) opts.onTiles(n, step, st.tk); }
+    return `<div class="st">${head}<div class="st-ttwrap"><div class="st-tt" data-cols="${c}" data-rv="${rv}" style="--cols:${c}">${list.map((t, i) =>
+      `<div class="tt ${anim ? 'anim' : ''}" style="--c:${colorOf(i)};${anim ? `animation-delay:${i * step}ms` : ''}"><div class="tt-b"><span>${esc(t.body)}</span></div>${named && t.name ? `<div class="tt-n">${esc(t.name)}</div>` : ''}</div>`).join('')}</div>
+      <div class="st-more" hidden>▼ まだあります</div></div>
+      <div class="st-foot"><span>📮 <b>${n}</b>件</span><span class="st-mode">${modeOf(runAnon(run, room.anon_mode)).icon} ${modeOf(runAnon(run, room.anon_mode)).name}</span></div></div>`;
+  }
   function build(screen, room, st) {
     const run = st && st.run;
     if (screen === 'waiting') {
@@ -1102,18 +1164,21 @@ function makeStage(el, getW, joinUrl, getHold) {
             <div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div>
             <div class="st-url">${esc(joinUrl)}</div>${DEMO ? '<div class="st-demo">🧪 おためしモード：このPCの中だけで動いています（スマホからは参加できません）</div>' : ''}</div>
         </div>
-        <div class="st-foot"><span class="st-count">🙋 <b data-pc>0</b>人 参加中</span><span class="st-mode">${modeOf(room.anon_mode).icon} ${modeOf(room.anon_mode).name}：${modeOf(room.anon_mode).desc}</span></div></div>`;
+        <div class="st-foot"><span class="st-count">🙋 <b data-pc>0</b>人 参加中</span><span class="st-mode">名前のあつかいは、質問ごとにスマホに表示されます</span></div></div>`;
     }
-    const q = run.img ? `<div class="st-qrow"><div class="st-qimg ${hasOptImgs(run) ? 'sm' : 'big'}">${imgTag(run.img)}</div><div class="st-q" data-fit>${esc(run.question)}</div></div>`
-      : `<div class="st-q" data-fit>${esc(run.question)}</div>`;
+    const q = qHead(run, hasOptImgs(run) ? 'sm' : 'big', false);
     if (isTextRun(run)) {
-      if (screen === 'open') return `<div class="st">${q}${timer()}<div class="st-write"><b>✍️ スマホで書いてね！</b><span>${TEXT_MAX}文字まで・締め切りまで書き直せます</span></div>${foot(room, run)}</div>`;
+      if (screen === 'open') {
+        const qr = qrDataUrl(joinUrl), im = qimg(run);
+        const join = `<div class="st-wjoin">${qr ? `<div class="st-wqr"><img src="${qr}" alt="参加用QRコード"></div>` : ''}<div>${im ? '<div class="st-wtop">✍️ スマホで書いてね！</div>' : ''}<div class="st-wlead">まだの人は<br>QRから参加してね</div><div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div></div></div>`;
+        const left = im ? `<div class="st-wimg">${imgTag(im)}</div>` : `<div class="st-wmsg"><b>✍️ スマホで<br>書いてね！</b><span>${TEXT_MAX}文字まで・締め切りまで書き直せます</span></div>`;
+        return `<div class="st">${qHead({ ...run, img: null }, 'big', false)}${timer()}<div class="st-wmain">${left}${join}</div>${foot(room, run)}</div>`;
+      }
       if (screen === 'closing') return `<div class="st">${q}<div class="st-big"><b>締め切り！</b><span>ありがとうございました</span></div>${foot(room, run)}</div>`;
+      if (screen === 'tiles') return textTilesStage(room, st, opts.getTexts ? opts.getTexts(run) : null);
       if (screen === 'pick') {
         const p = st.pick || {}, body = String(p.body || ''), center = !body.includes('\n') && textLen(body) <= 30;
-        const head = run.img ? `<div class="st-qrow pk"><div class="st-qimg sm">${imgTag(run.img)}</div><div class="st-q small" data-fit>${esc(run.question)}</div></div>`
-          : `<div class="st-q small" data-fit>${esc(run.question)}</div>`;
-        return `<div class="st">${head}<div class="st-pick"><div class="st-pick-card"><div class="st-pick-body ${center ? 'center' : ''}">${esc(body)}</div>${p.name ? `<div class="st-pick-name">― ${esc(p.name)} さん</div>` : ''}</div></div></div>`;
+        return `<div class="st">${qHead(run, 'sm', true)}<div class="st-pick"><div class="st-pick-card"><div class="st-pick-body ${center ? 'center' : ''}">${esc(body)}</div>${p.name ? `<div class="st-pick-name">― ${esc(p.name)} さん</div>` : ''}</div></div></div>`;
       }
       return `<div class="st">${q}<div class="st-big">${run.showCount ? `<b>📮 <span data-tot style="font-size:1em;opacity:1">0</span>件</b><span>みんなの声がとどきました！</span>` : `<b>📮</b><span>みんなの声がとどきました！</span>`}</div></div>`;
     }
@@ -1121,13 +1186,13 @@ function makeStage(el, getW, joinUrl, getHold) {
     if (screen === 'open' || (screen === 'closing' && live)) return `<div class="st">${q}${timer()}${live ? cols(run, false) : tiles(run)}${foot(room, run)}</div>`;
     if (screen === 'rolling') return `<div class="st">${q}<div class="st-big"><b class="drum">🥁</b><span>結果発表…！</span></div>${foot(room, run)}</div>`;
     if (screen === 'closing' || screen === 'closed') return `<div class="st">${q}<div class="st-big"><b>締め切り！</b><span>${screen === 'closed' ? '結果発表をお待ちください…' : '集計中…'}</span></div>${foot(room, run)}</div>`;
-    return `<div class="st"><div class="st-q small" data-fit>${esc(run.question)}</div>${cols(run, room.anon_mode === 'named')}${foot(room, run)}</div>`;
+    return `<div class="st"><div class="st-q small ${run.hideQ ? 'hidq' : ''}" data-fit>${esc(qtxt(run))}</div>${cols(run, runAnon(run, room.anon_mode) === 'named')}${foot(room, run)}</div>`;
   }
   function fit() {
     $$('[data-fit]', el).forEach(q => {
       q.style.fontSize = '';
       const inRow = !!q.closest('.st-qrow'), big = inRow && q.closest('.st-qrow').querySelector('.st-qimg.big');
-      const maxH = el.clientHeight * (q.classList.contains('small') ? 0.16 : (!inRow && el.querySelector('.tiles.img')) ? 0.17 : inRow ? (big ? 0.42 : 0.17) : 0.3);
+      const maxH = el.clientHeight * (q.classList.contains('small') ? 0.16 : (!inRow && el.querySelector('.tiles.img')) ? 0.17 : el.querySelector('.st-wmain') ? 0.2 : inRow ? (big ? 0.42 : 0.17) : 0.3);
       let fs = parseFloat(getComputedStyle(q).fontSize), guard = 0;
       while (q.scrollHeight > maxH && fs > 10 && guard++ < 30) { fs *= 0.92; q.style.fontSize = fs + 'px'; }
     });
@@ -1137,6 +1202,27 @@ function makeStage(el, getW, joinUrl, getHold) {
       body.style.fontSize = ''; let fs = parseFloat(getComputedStyle(body).fontSize), guard = 0;
       while ((card.offsetHeight > box.clientHeight || body.scrollWidth > body.clientWidth + 1) && fs > 8 && guard++ < 50) { fs *= 0.93; body.style.fontSize = fs + 'px'; }
     }
+    const tt = $('.st-tt', el);
+    if (tt && tt.clientHeight) {
+      const rv = +tt.dataset.rv || 1, gap = Math.max(4, el.clientHeight * 0.018);
+      const th = Math.max(20, (tt.clientHeight - gap * (rv - 1)) / rv);
+      tt.style.gap = gap + 'px'; tt.style.gridAutoRows = th + 'px'; tt.style.setProperty('--th', th + 'px');
+      tt.dataset.page = rv * (th + gap);
+      $$('.tt', tt).forEach(t => {
+        const b = $('.tt-b', t), sp = b.firstElementChild;
+        let fs = Math.min(th * 0.5, t.clientWidth * 0.3), g = 0; sp.style.fontSize = fs + 'px';
+        while ((sp.offsetHeight > b.clientHeight + 1 || sp.scrollWidth > b.clientWidth + 1) && fs > 6 && g++ < 30) { fs *= 0.9; sp.style.fontSize = fs + 'px'; }
+      });
+      tt.onscroll = () => more(tt);
+      more(tt);
+    }
+  }
+  function more(tt) { const m = $('.st-more', el); if (m) m.hidden = tt.scrollTop + tt.clientHeight >= tt.scrollHeight - 4; }
+  function applyScroll(st, instant) {
+    const tt = $('.st-tt', el); if (!tt) return;
+    const sk = st.tk + '|' + (st.scroll || 0);
+    if (sk === scrollKey && !instant) return; scrollKey = sk;
+    tt.scrollTo({ top: (st.scroll || 0) * (+tt.dataset.page || tt.clientHeight), behavior: instant ? 'auto' : 'smooth' });
   }
   function fill(w, screen) {
     $$('[data-pc]', el).forEach(e => e.textContent = w.participants);
@@ -1166,6 +1252,7 @@ function makeStage(el, getW, joinUrl, getHold) {
         sec.innerHTML = rem <= 0 ? '締め切り！' : `${fmtSec(s)}${s < 60 ? '<small>秒</small>' : ''}`;
       } else { t.classList.add('nolimit'); sec.innerHTML = '<small>回答受付中</small>'; }
     }
+    if (screen === 'tiles') applyScroll(st, false);
   }
   function update() {
     const w = getW();
@@ -1175,14 +1262,21 @@ function makeStage(el, getW, joinUrl, getHold) {
       return;
     }
     const st = w.room.state || { phase: 'waiting' }, run = st.run, screen = screenOf(st);
-    const k = [screen, run && run.id, run && run.reveal, run && run.showCount, st.pk, w.room.pin, w.room.title, qrReady, el.clientWidth > 0].join('|');
+    let lk = '';
+    if (screen === 'tiles') { const l = opts.getTexts ? opts.getTexts(run) : null; lk = l ? l.length + ':' + l.map(t => t.eid + (t.edited ? '*' : '')).join(',').length + ':' + (l.length ? l[l.length - 1].eid : '') : 'none'; }
+    const k = [screen, run && run.id, run && run.reveal, run && run.showCount, run && run.hideQ, run && run.anon, st.pk, st.tk, lk, w.room.pin, w.room.title, qrReady, el.clientWidth > 0].join('|');
     if (k !== key) {
       key = k; el.innerHTML = build(screen, w.room, st); hydrateImgs(el); fit();
+      if (screen === 'tiles') applyScroll(st, true);
       requestAnimationFrame(() => fill(w, screen));
     } else fill(w, screen);
   }
   window.addEventListener('resize', () => { key = ''; update(); });
-  return { update, reset() { key = ''; } };
+  return {
+    update, reset() { key = ''; },
+    scrollLocal(dir) { const tt = $('.st-tt', el); if (tt) tt.scrollBy({ top: dir * (+tt.dataset.page || tt.clientHeight), behavior: 'smooth' }); },
+    maxPage() { const tt = $('.st-tt', el); if (!tt || !tt.clientHeight) return null; const pg = +tt.dataset.page || tt.clientHeight || 1; return Math.max(0, Math.ceil((tt.scrollHeight - tt.clientHeight) / pg - 0.02)); },
+  };
 }
 
 /* =========================================================
@@ -1196,8 +1290,28 @@ function displayView(code) {
   const el = document.createElement('div'); $('#app').appendChild(el);
   let w = null;
   let hold = null; // おくれて気づいても、ドラムロールを最後まで鳴らしてから結果を出す
-  const stage = makeStage(el, () => w, pageUrl({ r: code }), () => hold);
-  w = makeWatcher(code, secret, () => { stage.update(); soundTick(); });
+  // タイル表示用：とどいた文章をとってくる
+  const dtx = { runId: null, list: null, busy: false, at: 0 };
+  async function fetchTexts(runId) {
+    if (dtx.busy) return; dtx.busy = true;
+    const res = await API.getTexts(code, secret, runId); dtx.busy = false; dtx.at = Date.now();
+    if (res.ok) { dtx.runId = runId; dtx.list = Array.isArray(res.texts) ? res.texts : []; stage.update(); }
+  }
+  function textsTick() {
+    const st = w && w.room && w.room.state; if (!st || !isTextRun(st.run) || st.phase !== 'result' || st.view !== 'tiles') return;
+    const tot = w.resultsRun === st.run.id && w.results ? w.results.total : null;
+    if (dtx.runId !== st.run.id) { if (Date.now() - dtx.at > 800) fetchTexts(st.run.id); }
+    else if ((tot != null && dtx.list && tot !== dtx.list.length) || Date.now() - dtx.at > 15000) { if (Date.now() - dtx.at > 2500) fetchTexts(st.run.id); }
+  }
+  let ponTk = null;
+  const stage = makeStage(el, () => w, pageUrl({ r: code }), () => hold, {
+    getTexts: run => dtx.runId === run.id ? dtx.list : null,
+    onTiles(n, step, tk) {  // ポポポポン（音が多すぎないように、80ms より細かくは鳴らさない）
+      if (ponTk === tk) return; ponTk = tk;
+      let last = -1e9; for (let i = 0; i < n; i++) { const t = i * step; if (t - last >= 80) { last = t; setTimeout(() => SFX.play('pon'), t); } }
+    },
+  });
+  w = makeWatcher(code, secret, () => { stage.update(); soundTick(); textsTick(); });
   // ---- 効果音 ----
   SFX.preload();
   const lock = document.createElement('button'); lock.className = 'sfx-lock'; lock.textContent = '🔇 クリックして音をオンにする'; lock.hidden = true; document.body.appendChild(lock);
@@ -1211,7 +1325,11 @@ function displayView(code) {
     if (!sd.inited) {
       sd.inited = true; sd.runId = run ? run.id : null; sd.phase = st.phase;
       sd.gongRun = st.phase === 'open' ? null : (run ? run.id : null); sd.rollKey = sd.endKey = st.rk || null; sd.pk = st.pk || null;
+      sd.hq = run ? run.id + ':' + !!run.hideQ : null;
     }
+    // 質問文の発表（かくす → 出す）
+    const hq = run ? run.id + ':' + !!run.hideQ : null;
+    if (hq !== sd.hq) { if (run && sd.hq === run.id + ':true' && !run.hideQ) SFX.play('roll_end'); sd.hq = hq; }
     if (st.phase === 'result' && st.pk && st.pk !== sd.pk) { sd.pk = st.pk; SFX.play('shutsudai'); }
     let want = null;
     if (st.phase === 'open' && run) {
@@ -1239,14 +1357,18 @@ function displayView(code) {
     }
     sd.phase = st.phase;
   }
-  setInterval(() => { stage.update(); soundTick(); updLock(); }, 250);
+  setInterval(() => { stage.update(); soundTick(); textsTick(); updLock(); }, 250);
   document.addEventListener('qrready', () => { stage.reset(); stage.update(); });
   // 全画面とカーソル
   const hint = document.createElement('div'); hint.className = 'st-hint'; hint.textContent = 'ダブルクリック（または F キー）で全画面'; document.body.appendChild(hint);
   setTimeout(() => hint.style.opacity = 0, 4000);
   const fs = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); };
   document.addEventListener('dblclick', fs);
-  document.addEventListener('keydown', e => { if (e.key === 'f' || e.key === 'F') fs(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'f' || e.key === 'F') fs();
+    else if (['ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); stage.scrollLocal(1); }
+    else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); stage.scrollLocal(-1); }
+  });
   let idleT; document.addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2500); });
 }
 
@@ -1276,11 +1398,12 @@ function participantView(code) {
     off.classList.toggle('show', offline);
     render();
   }
-  function head() {
-    const m = modeOf(pub.anon_mode);
+  function head(showMode = true) {
     return `<div class="p-head"><div class="p-title">${esc(pub.title || 'アンケート')}</div>${joined ? `<div class="p-name">👤 ${esc(joined.name)}</div>` : ''}</div>
-      <div class="p-mode">${m.icon} <b>${m.name}</b>：${m.desc}</div>`;
+      ${showMode ? `<div class="p-mode">🔒👤📢 <b>名前のあつかい</b>は質問ごとにちがいます。答える前に、質問の上に表示されます</div>` : ''}`;
   }
+  const BADGE = { full: '🔒 完全匿名の質問：だれが答えたか、マスターにもわかりません', master: '👤 匿名の質問：名前はマスターだけに見えます（モニタには出ません）', named: '📢 記名の質問：名前がモニタに出ます' };
+  const badge = run => { const m = runAnon(run, pub.anon_mode); return `<div class="p-badge ${m}">${BADGE[m]}</div>`; };
   function render() {
     if (!pub) { if (key !== 'load') { key = 'load'; app.innerHTML = `<div class="p-wrap"><div class="p-main p-center"><div class="dots"><i></i><i></i><i></i></div></div></div>`; } return; }
     if (pub.gone) { if (key !== 'gone') { key = 'gone'; app.innerHTML = DEMO
@@ -1293,7 +1416,7 @@ function participantView(code) {
     const my = run ? myVotes[run.id] : undefined;
     const rolling = st.phase === 'result' && st.reveal_at && Clock.now() < st.reveal_at;
     const txt = isTextRun(run);
-    const k = txt ? (screen === 'open' ? ['topen', run.id, pub.title].join('|') : ['tdone', run.id, st.phase, st.pk, pub.title].join('|'))
+    const k = txt ? (screen === 'open' ? ['topen', run.id, pub.title].join('|') : ['tdone', run.id, st.phase, st.pk, st.view, st.tk, pub.title].join('|'))
       : [screen, st.rev, my, st.phase, rolling, pub.title, pub.results ? JSON.stringify(pub.results.counts) + pub.results.total : ''].join('|');
     if (k === key) return tick();
     key = k;
@@ -1304,16 +1427,18 @@ function participantView(code) {
       if (screen === 'open') {
         main = `<div class="p-main">
           ${showImg ? `<div class="p-qimg">${imgTag(run.img)}<span class="zoom" data-zoom="${run.img}">🔍</span></div>` : ''}
-          <div class="p-q">${esc(run.question)}</div>
+          ${badge(run)}<div class="p-q">${esc(run.question)}</div>
           <div class="p-timer" id="pTimer"><div class="bar"><i id="pBar"></i></div><span id="pSec"></span></div>
           <textarea id="pTxt" class="p-txt" rows="4" maxlength="400" placeholder="ここに書いてね（${TEXT_MAX}文字まで）"></textarea>
           <div class="p-txtbar"><span class="p-left" id="pLeft"></span><button class="primary big" id="pSend">送信する</button></div>
           <div class="p-note" id="pTxtNote"></div>
         </div>`;
       } else {
-        const p = st.phase === 'result' && st.pick ? st.pick : null, mine = !!(p && mt && p.eid === mt.eid);
+        const p = st.phase === 'result' && st.pick && st.view !== 'tiles' ? st.pick : null, mine = !!(p && mt && p.eid === mt.eid);
         if (p && mine && st.pk !== lastPk) { lastPk = st.pk; try { navigator.vibrate && navigator.vibrate([80, 60, 80]); } catch {} }
-        if (p) main = `<div class="p-main p-center"><div class="big">${mine ? '🎉' : '📺'}</div><h2>${mine ? 'あなたのコメントが<br>モニタに出ました！' : 'モニタで紹介中！'}</h2><p>${esc(run.question)}</p>
+        if (st.phase === 'result' && st.view === 'tiles') main = `<div class="p-main p-center"><div class="big">🧱</div><h2>みんなの答えを<br>モニタで紹介中！</h2><p>${esc(run.question)}</p>
+          ${mt ? `<p style="margin-top:14px"><b>あなたが書いたこと</b></p><div class="p-quote">${esc(mt.body)}</div>` : ''}<p style="margin-top:20px">モニタに注目！</p></div>`;
+        else if (p) main = `<div class="p-main p-center"><div class="big">${mine ? '🎉' : '📺'}</div><h2>${mine ? 'あなたのコメントが<br>モニタに出ました！' : 'モニタで紹介中！'}</h2><p>${esc(run.question)}</p>
           <div class="p-quote ${mine ? 'mine' : ''}">${esc(p.body)}${p.name ? `<span class="nm">― ${esc(p.name)} さん</span>` : ''}</div></div>`;
         else main = `<div class="p-main p-center"><div class="big">📮</div><h2>受付は終わりました</h2><p>${esc(run.question)}</p>
           ${mt ? `<p style="margin-top:14px"><b>あなたが書いたこと</b></p><div class="p-quote">${esc(mt.body)}</div>` : `<p style="margin-top:12px"><b>書きませんでした</b></p>`}
@@ -1325,7 +1450,7 @@ function participantView(code) {
       const n = run.options.length, has = my !== undefined, showImg = run.phoneImg !== false, optI = showImg && hasOptImgs(run);
       main = `<div class="p-main">
         ${showImg && run.img ? `<div class="p-qimg ${optI ? 'small' : ''}">${imgTag(run.img)}<span class="zoom" data-zoom="${run.img}">🔍</span></div>` : ''}
-        <div class="p-q">${esc(run.question)}</div>
+        ${badge(run)}<div class="p-q">${esc(run.question)}</div>
         <div class="p-timer" id="pTimer"><div class="bar"><i id="pBar"></i></div><span id="pSec"></span></div>
         <div class="p-opts n${n} ${has ? 'has' : ''} ${optI ? 'imgs' : ''}">${run.options.map((o, i) => optI
           ? `<button class="opt ${my === i ? 'sel' : ''}" data-i="${i}" style="--c:${colorOf(i)}"><div class="oi ${run.imgFit === 'cover' ? 'fit-cover' : ''}">${run.optImgs[i] ? imgTag(run.optImgs[i]) + `<span class="zoom" data-zoom="${run.optImgs[i]}">🔍</span>` : `<span class="noimg">${esc(o)}</span>`}</div><span>${my === i ? '✓ ' : ''}${esc(o)}</span></button>`
@@ -1347,7 +1472,7 @@ function participantView(code) {
         ${ans != null ? `<div class="p-answer" style="--c:${colorOf(my)}">あなたの回答：${esc(ans)}</div>` : `<p style="margin-top:12px"><b>回答しませんでした</b></p>`}
         <p style="margin-top:20px">${st.phase === 'result' ? '結果はモニタを見てね！' : 'モニタに注目！'}</p></div>`;
     }
-    app.innerHTML = `<div class="p-wrap">${head()}${main}</div>`;
+    app.innerHTML = `<div class="p-wrap">${head(screen === 'waiting')}${main}</div>`;
     $$('.opt', app).forEach(b => b.onclick = e => { const z = e.target.closest('[data-zoom]'); if (z) { e.stopPropagation(); zoomImg(z.dataset.zoom); return; } choose(+b.dataset.i); });
     $$('.p-qimg [data-zoom]', app).forEach(z => z.onclick = () => zoomImg(z.dataset.zoom));
     $$('[data-phelp]', app).forEach(a => a.onclick = e => { e.preventDefault(); showHelp(true); });
@@ -1459,7 +1584,7 @@ function cleanQuestion(q, keepId) {
   const c = { id: keepId && /^q[a-z0-9]{4,20}$/.test(q.id) ? q.id : 'q' + uid(8), text: String(q.text || '').slice(0, 200), type: q.type, count: Math.min(6, Math.max(2, q.count | 0 || 4)),
     labels: strArr(q.labels, 6, 24), duration: DURATIONS.some(d => d[0] === +q.duration) ? +q.duration : 30,
     reveal: q.reveal === 'live' ? 'live' : 'after', showCount: q.showCount !== false, phoneResult: q.phoneResult !== false,
-    ...imgFieldsOf(q), imgQ: q.imgQ === 'high' ? 'high' : 'normal' };
+    ...imgFieldsOf(q), imgQ: q.imgQ === 'high' ? 'high' : 'normal', anon: MODES[q.anon] ? q.anon : null, hideQ: q.hideQ === true };
   if (isTextQ(c)) { c.reveal = 'after'; c.phoneResult = false; c.optImgs = []; }
   return isTextQ(c) || buildOptions(c).length >= 2 ? c : null;
 }
@@ -1480,14 +1605,14 @@ function parseRecord(obj) {
         .map(t => ({ eid: String(t.eid || uid(8)).slice(0, 24), body: String(t.body ?? '').slice(0, 400), name: t.name == null ? null : String(t.name).slice(0, 40), at: +t.at || 0, edited: !!t.edited }));
       return { run_id: String(x.run_id || uid(8)), question: String(x.question || '').slice(0, 300), options: [], counts: [], total: texts.length,
         started_at: +x.started_at || 0, names: null, texts,
-        settings: { type: 'text', duration: +st.duration || 0, reveal: 'after', showCount: st.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...st, optImgs: [] }) } };
+        settings: { type: 'text', duration: +st.duration || 0, reveal: 'after', showCount: st.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...st, optImgs: [] }), ...(MODES[st.anon] ? { anon: st.anon } : {}) } };
     }
     const options = strArr(x.options, 6, 40); if (options.length < 2) return null;
     const counts = options.map((_, i) => Math.max(0, +((x.counts || [])[i]) || 0));
     return { run_id: String(x.run_id || uid(8)), question: String(x.question || '').slice(0, 300), options, counts,
       total: Math.max(0, +x.total || counts.reduce((a, b) => a + b, 0)), started_at: +x.started_at || 0,
       names: Array.isArray(x.names) ? options.map((_, i) => strArr((x.names[i]), 2000, 40)) : null,
-      settings: { type: BTN_TYPES[st.type] ? st.type : 'custom', duration: +st.duration || 0, reveal: st.reveal === 'live' ? 'live' : 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st) } };
+      settings: { type: BTN_TYPES[st.type] ? st.type : 'custom', duration: +st.duration || 0, reveal: st.reveal === 'live' ? 'live' : 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st), ...(MODES[st.anon] ? { anon: st.anon } : {}) } };
   }).filter(Boolean);
   return { app: 'minnade-pochi', kind: 'record', version: 1, code: String(obj.code || '').slice(0, 12), title: String(obj.title || '').slice(0, 60),
     anon_mode: MODES[obj.anon_mode] ? obj.anon_mode : 'full', saved_at: +obj.saved_at || Date.now(), runs, questions: cleanQuestions(obj.questions), images: sanitizeImages(obj.images) };
@@ -1501,7 +1626,7 @@ function listBackups() {
 }
 function runToQuestion(run) {
   const st = run.settings || {};
-  const base = { text: run.question, duration: st.duration || 0, reveal: st.reveal || 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st) };
+  const base = { text: run.question, duration: st.duration || 0, reveal: st.reveal || 'after', showCount: st.showCount !== false, phoneResult: st.phoneResult !== false, ...imgFieldsOf(st), anon: MODES[st.anon] ? st.anon : null, hideQ: st.hideQ === true };
   if (st.type === 'text') return { ...base, type: 'text', count: 4, labels: [], reveal: 'after', phoneResult: false, optImgs: [] };
   const asType = { ...base, type: st.type, count: run.options.length };
   if (BTN_TYPES[st.type] && st.type !== 'custom' && buildOptions(asType).join('\u0001') === run.options.join('\u0001')) return asType;
@@ -1509,7 +1634,7 @@ function runToQuestion(run) {
 }
 function recordCsv(rec) {
   const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const withNames = rec.anon_mode !== 'full';
+  const withNames = rec.runs.some(x => runAnon(x.settings, rec.anon_mode) !== 'full');
   const rows = [['番号', '質問', '開始時刻', '選択肢／書いた文章', '人数', '割合(%)', '回答者数'].concat(withNames ? ['名前'] : [])];
   rec.runs.forEach((x, k) => isTextQ(x.settings) ? (x.texts || []).forEach(t => rows.push([k + 1, x.question, x.started_at ? fmtTime(x.started_at) : '', t.body, '', '', x.total].concat(withNames ? [t.name || ''] : [])))
     : x.options.forEach((o, i) => rows.push([k + 1, x.question, x.started_at ? fmtTime(x.started_at) : '', o, x.counts[i] || 0,
@@ -1531,11 +1656,11 @@ function runsHtml(rec, actions, nowId, textAct, curEid, shown) {
     const tot = run.total, max = Math.max(1, ...run.counts), st = run.settings || {};
     if (isTextQ(st)) return `<div class="hrun ${run.run_id === nowId ? 'now' : ''}">
       <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${imgTag(st.img, 'othumb')}${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
-      <div class="chips" style="margin-bottom:8px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">✍️ 自由に書く</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">📮 ${tot}件</span></div>
+      <div class="chips" style="margin-bottom:8px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">✍️ 自由に書く</span><span class="chip">${modeOf(runAnon(st, rec.anon_mode)).icon} ${modeOf(runAnon(st, rec.anon_mode)).name}</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">📮 ${tot}件</span></div>
       ${textTiles(run.texts, textAct ? t => textAct(run, t) : null, curEid, shown)}</div>`;
     return `<div class="hrun ${run.run_id === nowId ? 'now' : ''}">
       <div class="hrun-h"><div class="hrun-q"><small>Q${k + 1}</small>${imgTag(st.img, 'othumb')}${esc(run.question)}</div><div class="hrun-acts">${actions ? actions(run, k) : ''}</div></div>
-      <div class="chips" style="margin-bottom:6px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">${run.options.length}択</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">回答 ${tot}人</span></div>
+      <div class="chips" style="margin-bottom:6px">${run.run_id === nowId ? '<span class="chip live">🖥 モニタに表示中</span>' : ''}${run.started_at ? `<span class="chip">${fmtTime(run.started_at)}</span>` : ''}<span class="chip">${run.options.length}択</span><span class="chip">${modeOf(runAnon(st, rec.anon_mode)).icon} ${modeOf(runAnon(st, rec.anon_mode)).name}</span>${st.duration ? `<span class="chip">⏱ ${durName(st.duration)}</span>` : ''}<span class="chip">回答 ${tot}人</span></div>
       ${run.options.map((o, i) => `<div class="ores-row" style="--c:${colorOf(i)}"><span class="ores-lab">${imgTag((st.optImgs || [])[i], 'othumb')}${esc(o)}</span><span class="ores-bar"><i style="width:${run.counts[i] / max * 100}%"></i></span><span class="ores-n">${run.counts[i]}人 <small>${tot ? Math.round(run.counts[i] * 100 / tot) : 0}%</small></span>
         ${run.names && run.names[i] && run.names[i].length ? `<div class="ores-names">${esc(run.names[i].join('、'))}</div>` : ''}</div>`).join('')}
     </div>`;
@@ -1588,9 +1713,10 @@ const loadBank = () => ROOM_BANK.slice();
 const saveBank = b => { ROOM_BANK = b.slice(); if (bankSaver) bankSaver(); };
 const durName = v => (DURATIONS.find(d => d[0] === v) || [0, v + '秒'])[1];
 function qChips(q) {
-  if (isTextQ(q)) return `<span class="chip">✍️ 自由に書く（${TEXT_MAX}文字）</span><span class="chip">⏱ ${durName(q.duration)}</span>${q.showCount ? '' : '<span class="chip">件数かくす</span>'}${q.img ? '<span class="chip">🖼 画像あり</span>' : ''}`;
+  const mc = (q.anon ? `<span class="chip">${modeOf(q.anon).icon} ${modeOf(q.anon).name}</span>` : '') + (q.hideQ ? '<span class="chip">❓ 質問文かくす</span>' : '');
+  if (isTextQ(q)) return mc + `<span class="chip">✍️ 自由に書く（${TEXT_MAX}文字）</span><span class="chip">⏱ ${durName(q.duration)}</span>${q.showCount ? '' : '<span class="chip">件数かくす</span>'}${q.img ? '<span class="chip">🖼 画像あり</span>' : ''}`;
   const ops = buildOptions(q);
-  return `<span class="chip">${ops.length}択：${esc(ops.join('・'))}</span><span class="chip">⏱ ${durName(q.duration)}</span><span class="chip">${q.reveal === 'live' ? '📊 投票中も見せる' : '🎁 あとで発表'}</span>${q.showCount ? '' : '<span class="chip">人数かくす</span>'}${q.phoneResult !== false ? '<span class="chip">📱 スマホにも結果</span>' : ''}${q.img || hasOptImgs(q) ? '<span class="chip">🖼 画像あり</span>' : ''}`;
+  return mc + `<span class="chip">${ops.length}択：${esc(ops.join('・'))}</span><span class="chip">⏱ ${durName(q.duration)}</span><span class="chip">${q.reveal === 'live' ? '📊 投票中も見せる' : '🎁 あとで発表'}</span>${q.showCount ? '' : '<span class="chip">人数かくす</span>'}${q.phoneResult !== false ? '<span class="chip">📱 スマホにも結果</span>' : ''}${q.img || hasOptImgs(q) ? '<span class="chip">🖼 画像あり</span>' : ''}`;
 }
 function qFields(p, quick) {
   return `
@@ -1604,6 +1730,8 @@ function qFields(p, quick) {
       <label class="f"><span>制限時間</span><select id="${p}Dur">${DURATIONS.map(([v, t]) => `<option value="${v}" ${v === 30 ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
       <label class="f" id="${p}RevealWrap"><span>結果の見せ方</span><select id="${p}Reveal"><option value="after">締め切ってから発表</option><option value="live">投票中も見せる</option></select></label>
     </div>
+    <label class="f"><span>名前のあつかい（出題したあとは変えられません）</span><select id="${p}Anon">${Object.entries(MODES).map(([k, m]) => `<option value="${k}">${m.icon} ${m.name}</option>`).join('')}</select><small class="muted" id="${p}AnonTxt" style="display:block;margin-top:4px"></small></label>
+    <label class="chk"><input type="checkbox" id="${p}HideQ"> ❓ モニタに質問文を出さない（あとで「質問を発表」で出す）</label>
     <label class="chk"><input type="checkbox" id="${p}Show" checked> <span id="${p}ShowTxt">回答人数（例：37 / 42人）をモニタに出す</span></label>
     <label class="chk" id="${p}PhoneWrap"><input type="checkbox" id="${p}Phone" checked> 結果発表のとき、参加者のスマホにもグラフを出す</label>
     ${quick ? `<div class="btnprev" id="${p}Prev"></div>` : `<div class="imgbox" id="${p}ImgBox"><span>🖼 画像（どれも任意）</span>
@@ -1632,11 +1760,13 @@ function qForm(p, root) {
     hydrateImgs(g('ImgBox'));
   }
   const api = {
-    onImage: null,
+    onImage: null, defAnon: 'master',
+    setDefAnon(m) { api.defAnon = m; g('Anon').value = m; api.sync(); },
     read() {
       const base = { text: g('Text').value.trim(), type: g('Type').value, count: +g('Count').value,
         labels: g('LabelsWrap') ? $$('[data-lbl]', g('LabelsWrap')).map(i => i.value.trim()) : [],
-        duration: +g('Dur').value, reveal: g('Reveal').value, showCount: g('Show').checked, phoneResult: g('Phone').checked };
+        duration: +g('Dur').value, reveal: g('Reveal').value, showCount: g('Show').checked, phoneResult: g('Phone').checked,
+        anon: MODES[g('Anon').value] ? g('Anon').value : api.defAnon, hideQ: g('HideQ').checked };
       if (g('ImgBox')) {
         const n = buildOptions(base).length;
         Object.assign(base, { img: im.img, optImgs: im.optImgs.slice(0, n), imgFit: g('ImgFit').value, imgQ: g('ImgQ').value, phoneImg: g('PhoneImg').checked });
@@ -1647,6 +1777,7 @@ function qForm(p, root) {
       g('Text').value = q.text || ''; g('Type').value = q.type || 'yesno'; g('Count').value = String(q.count || 4);
       if (g('LabelsWrap')) $$('[data-lbl]', g('LabelsWrap')).forEach((i, k) => i.value = (q.labels || [])[k] || '');
       g('Dur').value = String(q.duration ?? 30); g('Reveal').value = q.reveal || 'after'; g('Show').checked = q.showCount !== false; g('Phone').checked = q.phoneResult !== false;
+      g('Anon').value = MODES[q.anon] ? q.anon : api.defAnon; g('HideQ').checked = q.hideQ === true;
       if (g('ImgBox')) {
         im.img = IMG_ID_RE.test(q.img || '') ? q.img : null; im.optImgs = (q.optImgs || []).slice();
         g('ImgFit').value = q.imgFit === 'cover' ? 'cover' : 'contain'; g('ImgQ').value = q.imgQ === 'high' ? 'high' : 'normal'; g('PhoneImg').checked = q.phoneImg !== false;
@@ -1661,6 +1792,8 @@ function qForm(p, root) {
       g('ShowTxt').textContent = txt ? 'とどいた件数（例：📮 23件）をモニタに出す' : '回答人数（例：37 / 42人）をモニタに出す';
       if (g('ImgFitWrap')) g('ImgFitWrap').hidden = txt;
       if (g('OptImgs')) g('OptImgs').hidden = txt;
+      const am = g('Anon').value;
+      g('AnonTxt').textContent = am === 'full' ? 'だれが答えたか、マスターにもわかりません' : am === 'master' ? '名前はマスターだけが見られます（モニタには出ません）' : txt ? 'モニタに文章を出すとき、名前も出ます' : '選んだ人の名前がモニタに出ます';
       const ops = buildOptions(api.read());
       if (g('Prev')) g('Prev').innerHTML = txt ? `<small>✍️ 参加者のスマホに入力らんが出ます（${TEXT_MAX}文字まで）。とどいた文章は、出題するとこの画面に並びます</small>`
         : ops.length ? ops.map((o, i) => `<span class="bp" style="--c:${colorOf(i)}">${esc(o)}</span>`).join('') : '<small>ボタンの文字を2つ以上入れてください</small>';
@@ -1690,6 +1823,7 @@ function qForm(p, root) {
     if (e.target.id === p + 'Type' && e.target.value === 'text' && g('Dur').value === '30') g('Dur').value = '0'; // 感想・大喜利は「制限なし」がおすすめ
     if (e.target.id && e.target.id.startsWith(p)) api.sync();
   });
+  g('Anon').value = api.defAnon;
   api.sync();
   return api;
 }
@@ -1771,7 +1905,8 @@ function operatorView(code) {
   const tx = { runId: null, list: [], at: 0, busy: false };       // とどいた文章（いま出ている自由に書く質問の分）
   const shownKey = 'evapp_shown_' + code;
   const shown = new Set(store.get(shownKey, []));                  // モニタで紹介ずみの文章
-  const stage = makeStage($('#preview'), () => w, joinUrl);
+  const stage = makeStage($('#preview'), () => w, joinUrl, null, { getTexts: run => tx.runId === run.id ? tx.list : null });
+  let anonInit = false;
   w = makeWatcher(code, secret, onUpdate);
   document.addEventListener('qrready', () => { stage.reset(); stage.update(); });
   const cur = () => (w.room && w.room.state) || { phase: 'waiting' };
@@ -1784,7 +1919,8 @@ function operatorView(code) {
     $('#hTitle').textContent = r.title || '（名前なし）';
     $('#hPin').textContent = r.pin;
     $('#hCount').textContent = w.participants;
-    $('#hMode').textContent = `${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}`;
+    $('#hMode').textContent = `名前の最初の設定：${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}`;
+    if (!anonInit) { anonInit = true; quick.setDefAnon(r.anon_mode); ed.defAnon = r.anon_mode; if (!editing) ed.setDefAnon(r.anon_mode); }
     renderStatus(); renderOpRes(); stage.update();
     const st = cur();
     if (dummyOn() && st.phase === 'open' && st.run && !botRuns.has(st.run.id)) { botRuns.add(st.run.id); runBots(st); }
@@ -1799,34 +1935,39 @@ function operatorView(code) {
     if (k === statusKey) return tickStatus();
     statusKey = k;
     if (isTextRun(run) && st.phase !== 'waiting') {
-      const T = { open: ['受付中（自由に書く）', 'open'], closed: ['締め切り（文章をえらんでモニタに出せます）', 'closed'], result: ['🖥 文章をモニタに表示中', 'result'] }[st.phase] || ['', ''];
-      let h = `<div class="phase ${T[1]}"><span class="dot"></span>${T[0]}</div><div class="op-q">Q. ${esc(run.question)}</div>`;
+      const tilesOn = st.phase === 'result' && st.view === 'tiles';
+      const T = { open: ['受付中（自由に書く）', 'open'], closed: ['締め切り（文章をえらんでモニタに出せます）', 'closed'], result: [tilesOn ? '🧱 タイルでモニタに表示中' : '🖥 文章をモニタに表示中', 'result'] }[st.phase] || ['', ''];
+      let h = `<div class="phase ${T[1]}"><span class="dot"></span>${T[0]}</div><div class="op-q">Q. ${esc(run.question)} ${modeChip(run)}</div>`;
       if (st.phase === 'open') h += `<div class="op-timer" id="opTimer"></div>
         <div class="ctl"><button class="primary big" id="cClose">⏹ 締め切る</button><button id="cWait">待機画面にもどす</button></div>
-        <div class="toggles"><button id="tCount" class="${run.showCount ? 'on' : ''}">とどいた件数：${run.showCount ? 'モニタに表示中' : 'かくし中'}</button></div>
+        <div class="toggles"><button id="tCount" class="${run.showCount ? 'on' : ''}">とどいた件数：${run.showCount ? 'モニタに表示中' : 'かくし中'}</button>${hqBtn(run)}</div>
         <p class="muted" style="font-size:.85rem;margin:10px 0 0">受付中でも、下の一覧から「🖥 モニタに出す」を押せます（そのときは受付を締め切ります）</p>`;
+      else if (tilesOn) h += `<div class="ctl"><button class="primary big" id="cUp" ${(st.scroll || 0) <= 0 ? 'disabled' : ''}>▲ 上へ</button><button class="primary big" id="cDown">▼ 下へ</button><button id="cHide">表示を消す</button><button id="cWait">待機画面にもどす</button></div>
+        <div class="toggles">${hqBtn(run)}</div>
+        <p class="muted" style="font-size:.85rem;margin:10px 0 0">表示用ウィンドウの上で、マウスホイールや ↑↓ キーでも動かせます。下の一覧の「🖥 モニタに出す」で1件だけ大きく出せます</p>`;
       else if (st.phase === 'result' && st.pick) h += `<div class="op-pick">${esc(st.pick.body)}${st.pick.name ? `<br><small>― ${esc(st.pick.name)} さん</small>` : ''}</div>
-        <div class="ctl"><button class="primary big" id="cNext">▶ 次の文章</button><button id="cHide">表示を消す</button><button id="cWait">待機画面にもどす</button></div>`;
-      else h += `<p class="muted" style="margin:.6em 0 0">下の「📮 とどいた文章」から、えらんで「🖥 モニタに出す」を押してね。</p><div class="ctl"><button class="primary" id="cNext">▶ 順番に出す</button><button id="cWait">待機画面にもどす</button></div>`;
+        <div class="ctl"><button class="primary big" id="cNext">▶ 次の文章</button><button id="cTiles">🧱 ぜんぶタイルで出す</button><button id="cHide">表示を消す</button><button id="cWait">待機画面にもどす</button></div><div class="toggles">${hqBtn(run)}</div>`;
+      else h += `<p class="muted" style="margin:.6em 0 0">下の「📮 とどいた文章」から、えらんで「🖥 モニタに出す」を押してね。</p><div class="ctl"><button class="primary" id="cTiles">🧱 ぜんぶタイルで出す</button><button class="primary" id="cNext">▶ 1件ずつ順番に出す</button><button id="cWait">待機画面にもどす</button></div><div class="toggles">${hqBtn(run)}</div>`;
       $('#status').innerHTML = h;
       const on = (id, f) => { const b = $('#' + id); if (b) b.onclick = f; };
-      on('cClose', closeNow); on('cWait', backToWait); on('cHide', hidePick); on('cNext', nextPick);
+      on('cClose', closeNow); on('cWait', backToWait); on('cHide', hidePick); on('cNext', nextPick); on('cTiles', () => showTiles(cur().run));
+      on('cUp', () => scrollTiles(-1)); on('cDown', () => scrollTiles(1)); on('tHideQ', toggleHideQ);
       on('tCount', () => { const s = cur(); push({ ...s, run: { ...s.run, showCount: !s.run.showCount } }); });
       tickStatus(); return;
     }
     const P ={ waiting: ['待機中（参加受付中）', ''], open: ['回答受付中', 'open'], closed: ['締め切り（結果はまだ非公開）', 'closed'], result: ['結果発表中', 'result'] }[st.phase] || ['待機中', ''];
     let h = `<div class="phase ${P[1]}"><span class="dot"></span>${rolling ? '🥁 ドラムロール中…' : P[0]}</div>`;
-    if (run && st.phase !== 'waiting') h += `<div class="op-q">Q. ${esc(run.question)}</div>`;
+    if (run && st.phase !== 'waiting') h += `<div class="op-q">Q. ${esc(run.question)} ${modeChip(run)}</div>`;
     if (st.phase === 'open') {
       h += `<div class="op-timer" id="opTimer"></div>
         <div class="ctl"><button class="primary big" id="cClose">⏹ 締め切る</button><button id="cWait">待機画面にもどす</button></div>
-        <div class="toggles"><button id="tCount" class="${run.showCount ? 'on' : ''}">回答人数：${run.showCount ? 'モニタに表示中' : 'かくし中'}</button><button id="tReveal" class="${run.reveal === 'live' ? 'on' : ''}">結果：${run.reveal === 'live' ? '投票中も見せる' : 'あとで発表'}</button>${phoneBtn(run)}</div>`;
+        <div class="toggles"><button id="tCount" class="${run.showCount ? 'on' : ''}">回答人数：${run.showCount ? 'モニタに表示中' : 'かくし中'}</button><button id="tReveal" class="${run.reveal === 'live' ? 'on' : ''}">結果：${run.reveal === 'live' ? '投票中も見せる' : 'あとで発表'}</button>${phoneBtn(run)}${hqBtn(run)}</div>`;
     } else if (st.phase === 'closed') {
       h += `<div class="ctl"><button class="primary big" id="cReveal">🎉 結果発表！</button><button id="cWait">待機画面にもどす</button></div>
         <label class="chk" style="margin:10px 0 0"><input type="checkbox" id="cNoRoll" ${store.get(NOROLL_KEY, false) === true ? 'checked' : ''}> ロールなしで発表（ドラムロールをとばして、すぐ結果を出す）</label>
-        <div class="toggles">${phoneBtn(run)}</div>`;
+        <div class="toggles">${phoneBtn(run)}${hqBtn(run)}</div>`;
     } else if (st.phase === 'result') {
-      h += `<div class="ctl"><button class="primary big" id="cWait">待機画面にもどす</button><button id="cAgain">同じ質問をもう一度</button></div><div class="toggles">${phoneBtn(run)}</div>`;
+      h += `<div class="ctl"><button class="primary big" id="cWait">待機画面にもどす</button><button id="cAgain">同じ質問をもう一度</button></div><div class="toggles">${phoneBtn(run)}${hqBtn(run)}</div>`;
     } else {
       h += `<p class="muted" style="margin:.6em 0 0">モニタには参加用のQRコードとカギの数字が出ています。左から質問を選んで出題してね。</p>`;
     }
@@ -1837,8 +1978,12 @@ function operatorView(code) {
     on('tPhone', () => { const s = cur(); push({ ...s, run: { ...s.run, phoneResult: !s.run.phoneResult } }); });
     on('tCount', () => { const s = cur(); push({ ...s, run: { ...s.run, showCount: !s.run.showCount } }); });
     on('tReveal', () => { const s = cur(); push({ ...s, run: { ...s.run, reveal: s.run.reveal === 'live' ? 'after' : 'live' } }); });
+    on('tHideQ', toggleHideQ);
     tickStatus();
   }
+  function hqBtn(run) { return run.hideQ ? `<button id="tHideQ" class="on">🎉 質問を発表！（いまモニタでかくし中）</button>` : `<button id="tHideQ">❓ モニタの質問文をかくす</button>`; }
+  function modeChip(run) { const m = modeOf(runAnon(run, w.room.anon_mode)); return `<span class="chip">${m.icon} ${m.name}</span>`; }
+  function toggleHideQ() { const s = cur(); if (s.run) push({ ...s, run: { ...s.run, hideQ: !s.run.hideQ } }); }
   function phoneBtn(run) { return `<button id="tPhone" class="${run.phoneResult ? 'on' : ''}">📱 スマホに結果：${run.phoneResult ? '出す' : '出さない'}</button>`; }
   function tickStatus() {
     const t = $('#opTimer'); if (!t) return; const st = cur();
@@ -1851,12 +1996,12 @@ function operatorView(code) {
     const st = cur(), run = st.run, box = $('#opres');
     if (isTextRun(run)) {
       const list = tx.runId === run.id ? tx.list : null, curEid = st.phase === 'result' && st.pick ? st.pick.eid : null;
-      const k = JSON.stringify(['t', run.id, list, curEid, [...shown].length, w.participants, w.room.anon_mode]);
+      const md = runAnon(run, w.room.anon_mode);
+      const k = JSON.stringify(['t', run.id, list, curEid, [...shown].length, w.participants, md]);
       if (k === opresKey) return; opresKey = k;
       $('#opresH').innerHTML = `📮 とどいた文章 <small>${list ? `${list.length}件 / 参加 ${w.participants}人` : ''}（きた順・マスターだけに見えています）</small>`;
-      const md = w.room.anon_mode;
       box.innerHTML = (list ? textTiles(list, t => `<button class="${t.eid === curEid ? '' : 'primary'}" data-pick="${esc(t.eid)}">${t.eid === curEid ? '🖥 表示中' : '🖥 モニタに出す'}</button>`, curEid, shown) : '<p class="muted" style="margin:0">読みこみ中…</p>')
-        + `<p class="muted" style="font-size:.8rem;margin:10px 0 0">${md === 'full' ? '🔒 完全匿名なので、名前は記録されていません' : md === 'named' ? '📢 記名の部屋なので、モニタに名前も出ます' : '👤 名前はマスターにだけ見えます（モニタには出ません）'}</p>`;
+        + `<p class="muted" style="font-size:.8rem;margin:10px 0 0">${md === 'full' ? '🔒 完全匿名なので、名前は記録されていません' : md === 'named' ? '📢 記名の質問なので、モニタに名前も出ます' : '👤 名前はマスターにだけ見えます（モニタには出ません）'}</p>`;
       return;
     }
     if (opresKey) { opresKey = ''; $('#opresH').innerHTML = '📊 集計 <small>（マスターだけに見えています）</small>'; }
@@ -1868,7 +2013,7 @@ function operatorView(code) {
       <div class="ores-row" style="--c:${colorOf(i)}"><span class="ores-lab">${esc(o)}</span><span class="ores-bar"><i style="width:${counts[i] / max * 100}%"></i></span><span class="ores-n">${counts[i]}人 <small>${tot ? Math.round(counts[i] * 100 / tot) : 0}%</small></span>
       ${names && names[i] && names[i].length ? `<div class="ores-names">${esc(names[i].join('、'))}</div>` : ''}</div>`).join('') +
       `<div class="ores-tot">回答 ${tot} / ${w.participants}人</div>` +
-      (w.room.anon_mode === 'full' ? '<small>🔒 完全匿名なので、だれが何を選んだかは記録されていません</small>' : '');
+      (runAnon(run, w.room.anon_mode) === 'full' ? '<small>🔒 完全匿名なので、だれが何を選んだかは記録されていません</small>' : '');
   }
 
   /* --- 状態を送る --- */
@@ -1884,15 +2029,16 @@ function operatorView(code) {
     const st = cur();
     if (st.phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って次を出しますか？')) return;
     const imf = imgFieldsOf(q); imf.optImgs = imf.optImgs.slice(0, options.length);
+    const anon = MODES[q.anon] ? q.anon : (w.room ? w.room.anon_mode : 'full'), hideQ = q.hideQ === true;
     if (isTextQ(q)) {
       const id = 'r' + uid(10), question = (q.text || '').trim() || 'ひとこと書いてね';
-      const run = { id, question, options: [], settings: { type: 'text', duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf } };
-      const ok = await push({ phase: 'open', run: { id, kind: 'text', question, options: [], duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, qid: q.id || null } }, q.duration, run);
+      const run = { id, question, options: [], settings: { type: 'text', duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, anon, hideQ } };
+      const ok = await push({ phase: 'open', run: { id, kind: 'text', question, options: [], duration: q.duration, reveal: 'after', showCount: q.showCount, phoneResult: false, ...imf, anon, hideQ, qid: q.id || null } }, q.duration, run);
       if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
       return;
     }
-    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options, settings: { type: q.type, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf } };
-    const ok = await push({ phase: 'open', run: { id: run.id, question: run.question, options: run.options, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf, qid: q.id || null } }, q.duration, run);
+    const run = { id: 'r' + uid(10), question: (q.text || '').trim() || 'アンケート', options, settings: { type: q.type, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf, anon, hideQ } };
+    const ok = await push({ phase: 'open', run: { id: run.id, question: run.question, options: run.options, duration: q.duration, reveal: q.reveal, showCount: q.showCount, phoneResult: q.phoneResult !== false, ...imf, anon, hideQ, qid: q.id || null } }, q.duration, run);
     if (ok && q.id) { used.add(q.id); store.set(usedKey, [...used]); renderBankRun(); }
   }
   function closeNow() { const st = cur(); if (st.phase !== 'open') return; push({ ...st, phase: st.run.reveal === 'live' ? 'result' : 'closed' }); }
@@ -1922,8 +2068,20 @@ function operatorView(code) {
   async function pickText(run, t) {
     const st = cur();
     if (st.phase === 'open' && !confirm(st.run && st.run.id === run.id ? 'まだ受付中です。締め切って、この文章をモニタに出しますか？' : 'いま回答受付中のアンケートがあります。締め切って、この文章をモニタに出しますか？')) return;
-    const pick = { eid: t.eid, body: t.body, name: w.room.anon_mode === 'named' && t.name ? t.name : null };
+    const pick = { eid: t.eid, body: t.body, name: runAnon(run, w.room.anon_mode) === 'named' && t.name ? t.name : null };
     if (await push({ phase: 'result', run, pick, pk: uid(6) })) { markShown(t.eid); opresKey = ''; renderOpRes(); if (!$('#tabHist').hidden) renderHistory(); }
+  }
+  async function showTiles(run) {
+    const st = cur();
+    if (st.phase === 'open' && !confirm(st.run && st.run.id === run.id ? 'まだ受付中です。締め切って、タイルで出しますか？' : 'いま回答受付中のアンケートがあります。締め切って、タイルで出しますか？')) return;
+    if (await push({ phase: 'result', run, view: 'tiles', tk: uid(6), scroll: 0 })) toast('モニタにタイルで出しました');
+  }
+  function scrollTiles(d) {
+    const st = cur(); if (st.view !== 'tiles') return;
+    const max = stage.maxPage(); let n = (st.scroll || 0) + d;
+    if (n < 0) return;
+    if (max != null && n > max) return toast('いちばん下です');
+    push({ ...st, scroll: n });
   }
   function hidePick() { const st = cur(); if (st.run) push({ phase: 'closed', run: st.run }); }
   function nextPick() {
@@ -1940,7 +2098,7 @@ function operatorView(code) {
     const run = cur().run, t = isTextRun(run) && tx.runId === run.id && tx.list.find(x => x.eid === b.dataset.pick);
     if (t && !(cur().pick && cur().pick.eid === t.eid)) pickText(run, t);
   });
-  function again() { const r = cur().run; if (isTextRun(r)) return ask({ text: r.question, type: 'text', duration: r.duration, showCount: r.showCount, ...imgFieldsOf(r) }); if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false, ...imgFieldsOf(r) }); }
+  function again() { const r = cur().run; if (isTextRun(r)) return ask({ text: r.question, type: 'text', duration: r.duration, showCount: r.showCount, ...imgFieldsOf(r), anon: r.anon }); if (r) ask({ text: r.question, type: 'custom', labels: r.options, duration: r.duration, reveal: r.reveal, showCount: r.showCount, phoneResult: r.phoneResult !== false, ...imgFieldsOf(r), anon: r.anon }); }
 
   setInterval(() => {
     const st = cur();
@@ -2002,23 +2160,26 @@ function operatorView(code) {
     const rec = { ...lastRec, runs: lastRec.runs.slice().reverse() };
     setTimeout(() => hydrateImgs($('#histList')), 0);
     const curEid = st.phase === 'result' && st.pick ? st.pick.eid : null;
-    $('#histList').innerHTML = `<div class="card">${runsHtml(rec, run => `${isTextQ(run.settings) ? '' : `<button class="primary" data-show="${esc(run.run_id)}">🖥 結果をモニタに出す</button>`}<button data-reask="${esc(run.run_id)}">🔁 もう一度出題</button>`, nowId,
+    $('#histList').innerHTML = `<div class="card">${runsHtml(rec, run => `${isTextQ(run.settings) ? `<button class="primary" data-htiles="${esc(run.run_id)}">🧱 タイルでモニタに出す</button>` : `<button class="primary" data-show="${esc(run.run_id)}">🖥 結果をモニタに出す</button>`}<button data-reask="${esc(run.run_id)}">🔁 もう一度出題</button>`, nowId,
       (run, t) => `<button class="${t.eid === curEid ? '' : 'primary'}" data-hpick="${esc(run.run_id)}" data-eid="${esc(t.eid)}">${t.eid === curEid ? '🖥 表示中' : '🖥 モニタに出す'}</button>`, curEid, shown)}</div>`;
     $$('[data-show]', $('#histList')).forEach(b => b.onclick = () => showOnMonitor(lastRec.runs.find(r => r.run_id === b.dataset.show)));
     $$('[data-hpick]', $('#histList')).forEach(b => b.onclick = () => {
       const r = lastRec.runs.find(x => x.run_id === b.dataset.hpick), t = r && (r.texts || []).find(x => x.eid === b.dataset.eid);
       if (!t || t.eid === curEid) return;
-      const s = r.settings || {}, now = cur().run;
-      const run = now && now.id === r.run_id ? now : { id: r.run_id, kind: 'text', question: r.question, options: [], duration: s.duration || 0, reveal: 'after', showCount: s.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...s, optImgs: [] }), replay: true };
-      pickText(run, t);
+      pickText(textRunOf(r), t);
     });
+    $$('[data-htiles]', $('#histList')).forEach(b => b.onclick = () => { const r = lastRec.runs.find(x => x.run_id === b.dataset.htiles); if (r) showTiles(textRunOf(r)); });
     $$('[data-reask]', $('#histList')).forEach(b => b.onclick = () => { const r = lastRec.runs.find(x => x.run_id === b.dataset.reask); if (r) ask(runToQuestion(r)); });
+  }
+  function textRunOf(r) {
+    const s = r.settings || {}, now = cur().run;
+    return now && now.id === r.run_id ? now : { id: r.run_id, kind: 'text', question: r.question, options: [], duration: s.duration || 0, reveal: 'after', showCount: s.showCount !== false, phoneResult: false, ...imgFieldsOf({ ...s, optImgs: [] }), anon: MODES[s.anon] ? s.anon : null, replay: true };
   }
   async function showOnMonitor(run) {
     if (!run) return;
     if (cur().phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って、この結果をモニタに出しますか？')) return;
     const s = run.settings || {};
-    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, phoneResult: s.phoneResult !== false, ...imgFieldsOf(s), replay: true }, rk: uid(6) })) toast('モニタに結果を出しました');
+    if (await push({ phase: 'result', run: { id: run.run_id, question: run.question, options: run.options, duration: s.duration || 0, reveal: s.reveal || 'after', showCount: s.showCount !== false, phoneResult: s.phoneResult !== false, ...imgFieldsOf(s), anon: MODES[s.anon] ? s.anon : null, replay: true }, rk: uid(6) })) toast('モニタに結果を出しました');
   }
   function histTick() {
     const st = cur();
