@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.12</title>
+<title>みんなでポチッ v0.12.1</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -630,7 +630,8 @@ const bzVol = () => { const v = Number(store.get(BZ_VOL_KEY, 0.8)); return Numbe
 const ROLL_MS = 4600;
 const SFX = (() => {
   const FILES = { shutsudai: 'sounds/shutsudai.mp3', timer: 'sounds/timer.mp3', timer_fast: 'sounds/timer_fast.mp3', gong: 'sounds/gong.mp3',
-    roll: 'sounds/roll.mp3', roll_end: 'sounds/roll_end.mp3', seikai: 'sounds/seikai.mp3', fuseikai: 'sounds/fuseikai.mp3' };
+    roll: 'sounds/roll.mp3', roll_end: 'sounds/roll_end.mp3', seikai: 'sounds/seikai.mp3', fuseikai: 'sounds/fuseikai.mp3',
+    buzz: 'sounds/buzz.mp3' };  // buzz.mp3 がなければ手作りの「ピンポーン」
   const LOOP_LEN = { timer: 5.6, timer_fast: 1.6 };
   let ctx = null, master = null, loading = null, loopNode = null;
   const bufs = {}, shots = {};
@@ -680,6 +681,12 @@ const SFX = (() => {
     seikai(t) { [0, 0.42].forEach(o => { bell(t + o, 988, 0.5, 0.3); bell(t + o + 0.16, 784, 0.7, 0.3); }); },
     fuseikai(t) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.connect(master); tone(t, 140, 0.9, { type: 'sawtooth', gain: 0.35, out: lp, attack: 0.01 }); },
     tick(t, fast) { tone(t, fast ? 1400 : 1100, 0.05, { type: 'square', gain: 0.08 }); },
+    buzz(t) {  // 早押しの1位「ピンポーン！」
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200; lp.connect(master);
+      [880, 1108.7, 1318.5].forEach(f => tone(t, f, 0.32, { type: 'square', gain: 0.06, out: lp, attack: 0.003 }));
+      [659.3, 830.6, 987.8].forEach(f => tone(t + 0.3, f, 0.9, { type: 'square', gain: 0.055, out: lp, attack: 0.004 }));
+      bell(t, 1760, 0.5, 0.14);
+    },
     pon(t) { const f = 520 + Math.random() * 420; tone(t, f, 0.14, { gain: 0.22, attack: 0.003 }); tone(t, f * 2.01, 0.07, { gain: 0.07, attack: 0.002 }); },
   };
   const LOG = /[?&]sfxlog/.test(location.search) ? (window.__sfxLog = []) : null;
@@ -723,7 +730,8 @@ const SFX = (() => {
     if (b) { const src = ctx.createBufferSource(); src.buffer = b; src.connect(master); src.start(); }
     else if (SYN[name]) SYN[name](ctx.currentTime + 0.02);
   }
-  return { preload, unlock, running, play, playVol, stop, loop, stopLoop, refresh, enabled, volume, looping: () => !!loopNode };
+  const duration = (name, d) => bufs[name] ? bufs[name].duration : d;
+  return { preload, unlock, running, play, playVol, duration, stop, loop, stopLoop, refresh, enabled, volume, looping: () => !!loopNode };
 })();
 window.addEventListener('storage', e => { if (e.key === SFX_ON_KEY || e.key === SFX_VOL_KEY) SFX.refresh(); });
 
@@ -788,6 +796,7 @@ const HELP_MASTER = `<div class="help">
   <ul>
     <li>進行タブの「🔴 早押しをはじめる」を押すと、参加者のスマホに大きな丸いボタンが出ます（早押しはいつも記名です）</li>
     <li>押した順に、モニタに上位5人の名前が出ます（2位からは1位との差の秒数も）。操作画面には全員の順番が出ます</li>
+    <li>だれかが押すたびに、モニタから早押しボタンの音が鳴ります（鳴っているあいだに押された分は鳴らしません）</li>
     <li>順番は、サーバーに届いた順で決まります。1つの問題で数えるのは、1人1回目だけです</li>
     <li>「↺ リセット（次の問題へ）」で次の問題に。「⭕ ピンポン」「❌ ブー」は、<b>操作している画面</b>（PC・スマホ）から鳴ります。音量はその下のつまみで</li>
     <li>本番の前に「ためしに押してみて〜」とボタンを押してもらい、リセットするとスイッチチェックになります</li>
@@ -1066,7 +1075,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.12</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.12.1</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -1432,7 +1441,15 @@ function displayView(code) {
   }
   let ponTk = null;
   const bzRound = () => { const st = w && w.room && w.room.state; return st && st.phase === 'buzz' && st.buzz ? st.buzz.round : null; };
-  const bf = makeBuzzFeed(code, secret, bzRound, () => stage.update());
+  // 早押しの音：だれかが新しく押すたびに鳴らす。鳴っているあいだに押された分は鳴らさない（重ねない）
+  const bzSnd = { round: null, n: 0, until: 0 };
+  function buzzSound() {
+    const round = bzRound(), list = bf.get(round);
+    if (bzSnd.round !== round) { bzSnd.n = bzSnd.round === null ? list.length : 0; bzSnd.round = round; }  // 開いたときにもう押されていた分は鳴らさない
+    if (list.length > bzSnd.n && Date.now() >= bzSnd.until) { SFX.play('buzz'); bzSnd.until = Date.now() + SFX.duration('buzz', 1.4) * 1000; }
+    bzSnd.n = Math.max(bzSnd.n, list.length);
+  }
+  const bf = makeBuzzFeed(code, secret, bzRound, () => { stage.update(); buzzSound(); });
   const stage = makeStage(el, () => w, pageUrl({ r: code }), () => hold, {
     getTexts: run => dtx.runId === run.id ? dtx.list : null,
     getBuzz: round => bf.get(round),
