@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.13</title>
+<title>みんなでポチッ v0.13.2</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -371,6 +371,9 @@ img[data-img]:not([src]){visibility:hidden}
 .bz-btn small{font-size:1rem;font-weight:800;margin-top:4px}
 .bz-res{font-size:1.25rem;font-weight:900;min-height:1.6em}
 .bz-ok{background:#2e9e65!important;border-color:#2e9e65!important;color:#fff!important;font-size:1.3rem!important}
+.bzbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;max-width:560px}
+.bzbtns button{min-height:72px;font-size:clamp(1.05rem,4.8vw,1.45rem)!important;font-weight:900;border-radius:14px;white-space:nowrap;padding:.4em .3em}
+.bzbtns .bz-q{grid-column:1/-1}
 .bz-q{background:#3e63dd!important;border-color:#3e63dd!important;color:#fff!important;font-size:1.3rem!important}
 .bz-ng{background:#e5484d!important;border-color:#e5484d!important;color:#fff!important;font-size:1.3rem!important}
 .bzlist{display:grid;gap:6px}
@@ -1116,7 +1119,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.13</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.13.2</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -2213,7 +2216,8 @@ function operatorView(code) {
   const route = () => soundRoute(w && w.room, opId, myMute(), myTouch);
   const opDir = makeSoundDirector({ getW: () => w, isPlayer: () => { const r = route(); return r.where === 'op' && r.id === opId; },
     getTexts: run => tx.runId === run.id ? tx.list : null, getBuzz: r => bf.get(r), buzzLoaded: r => bf.loaded(r) });
-  const opBeat = touch => API.opBeat(code, secret, opId, touch, myMute());
+  let beatErr = null;  // サーバーに v0.13 の追加SQLが入っていないと、ここにエラーが入る
+  const opBeat = touch => API.opBeat(code, secret, opId, touch, myMute()).then(r => { beatErr = r.ok ? null : r.error; renderSfxInd(); return r; });
   opBeat(false); setInterval(() => opBeat(false), 3000);
   function onTouch() {
     SFX.unlock(); myTouch = Clock.now();
@@ -2236,9 +2240,11 @@ function operatorView(code) {
   function renderSfxInd() {
     const el = $('#hSfx'); if (!el || !w.room) return;
     const r = route(); let t, warn = false;
-    if (!SFX.enabled()) t = '🔇 効果音オフ';
+    if (beatErr === 'server') { t = '⚠️ サーバーの更新（SQL 0.13）がまだです：音の場所を決められません'; warn = true; }
+    else if (!SFX.enabled()) t = '🔇 効果音オフ';
     else if (r.where === 'disp') t = '🔊 音：表示用ウィンドウ';
-    else if (r.where === 'op') t = r.id === opId ? (SFX.running() ? '🔊 音：この画面' : '🔊 音：この画面（👆どこかをタップすると鳴ります）') : '🔇 音：ほかの操作画面';
+    else if (r.where === 'op') t = r.id === opId ? (SFX.running() ? '🔊 音：この画面' : '🔊 音：この画面（👆どこかをタップすると鳴ります）')
+      : myMute() ? '🔇 この画面は「鳴らさない」設定（⚙️ 設定で変えられます）' : '🔇 音：ほかの操作画面（ここをさわると、こっちで鳴ります）';
     else { t = '⚠️ どこからも効果音が鳴りません'; warn = true; }
     if (el.textContent !== t) el.textContent = t; el.classList.toggle('warn', warn);
   }
@@ -2276,7 +2282,7 @@ function operatorView(code) {
       const vol = SFX.volume();
       $('#status').innerHTML = `<div class="phase open"><span class="dot"></span>🔴 早押し中　第${Number(st.buzz.n) || 1}問</div>
         <div class="ctl"><button class="primary big" id="bzReset">↺ リセット（次の問題へ）</button></div>
-        <div class="ctl"><button class="big bz-q" id="bzQ">🎵 デデン！（出題）</button><button class="big bz-ok" id="bzOk">⭕ ピンポン</button><button class="big bz-ng" id="bzNg">❌ ブー</button></div>
+        <div class="bzbtns"><button class="bz-q" id="bzQ">🎵 デデン！（出題）</button><button class="bz-ok" id="bzOk">⭕ ピンポン</button><button class="bz-ng" id="bzNg">❌ ブー</button></div>
         <div class="vol" style="margin:12px 0 0">🔉 音量 <input type="range" id="bzVol" min="0" max="100" value="${Math.round(vol * 100)}"><span id="bzVolV">${Math.round(vol * 100)}</span></div>
         <p class="muted" style="font-size:.82rem;margin:6px 0 0">効果音は、表示用ウィンドウがあればそっちから、なければ<b>さいごにさわった操作画面</b>から鳴ります（いまどこで鳴るかは、いちばん上に出ています。音ごとの大きさは ⚙️ 設定で）</p>
         <div class="ctl"><button id="bzEnd">早押しを終わる（待機画面へ）</button></div>`;
