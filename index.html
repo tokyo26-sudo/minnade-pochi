@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.12.1</title>
+<title>みんなでポチッ v0.12.2</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -371,6 +371,7 @@ img[data-img]:not([src]){visibility:hidden}
 .bz-btn small{font-size:1rem;font-weight:800;margin-top:4px}
 .bz-res{font-size:1.25rem;font-weight:900;min-height:1.6em}
 .bz-ok{background:#2e9e65!important;border-color:#2e9e65!important;color:#fff!important;font-size:1.3rem!important}
+.bz-q{background:#3e63dd!important;border-color:#3e63dd!important;color:#fff!important;font-size:1.3rem!important}
 .bz-ng{background:#e5484d!important;border-color:#e5484d!important;color:#fff!important;font-size:1.3rem!important}
 .bzlist{display:grid;gap:6px}
 .bzli{display:grid;grid-template-columns:3em 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 12px;background:#fff}
@@ -799,7 +800,7 @@ const HELP_MASTER = `<div class="help">
     <li>押した順に、モニタに上位5人の名前が出ます（2位からは1位との差の秒数も）。操作画面には全員の順番が出ます</li>
     <li>だれかが押すたびに、モニタから早押しボタンの音が鳴ります（鳴っているあいだに押された分は鳴らしません）</li>
     <li>順番は、サーバーに届いた順で決まります。1つの問題で数えるのは、1人1回目だけです</li>
-    <li>「↺ リセット（次の問題へ）」で次の問題に。「⭕ ピンポン」「❌ ブー」は、<b>操作している画面</b>（PC・スマホ）から鳴ります。音量はその下のつまみで</li>
+    <li>「↺ リセット（次の問題へ）」で次の問題に。「🎵 デデン！（出題）」「⭕ ピンポン」「❌ ブー」は、<b>操作している画面</b>（PC・スマホ）から鳴ります。音量はその下のつまみで</li>
     <li>本番の前に「ためしに押してみて〜」とボタンを押してもらい、リセットするとスイッチチェックになります</li>
     <li>早押しの記録は「📜 履歴」と記録ファイルにも残ります</li>
   </ul>
@@ -1076,7 +1077,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.12.1</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.12.2</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -2169,11 +2170,12 @@ function operatorView(code) {
       const vol = bzVol();
       $('#status').innerHTML = `<div class="phase open"><span class="dot"></span>🔴 早押し中　第${Number(st.buzz.n) || 1}問</div>
         <div class="ctl"><button class="primary big" id="bzReset">↺ リセット（次の問題へ）</button></div>
-        <div class="ctl"><button class="big bz-ok" id="bzOk">⭕ ピンポン</button><button class="big bz-ng" id="bzNg">❌ ブー</button></div>
-        <div class="vol" style="margin:12px 0 0">🔉 ⭕❌の音量 <input type="range" id="bzVol" min="0" max="100" value="${Math.round(vol * 100)}"><span id="bzVolV">${Math.round(vol * 100)}</span></div>
-        <p class="muted" style="font-size:.82rem;margin:6px 0 0">⭕❌の音は、この画面（いま操作しているPC・スマホ）から鳴ります。モニタからは鳴りません</p>
+        <div class="ctl"><button class="big bz-q" id="bzQ">🎵 デデン！（出題）</button><button class="big bz-ok" id="bzOk">⭕ ピンポン</button><button class="big bz-ng" id="bzNg">❌ ブー</button></div>
+        <div class="vol" style="margin:12px 0 0">🔉 🎵⭕❌の音量 <input type="range" id="bzVol" min="0" max="100" value="${Math.round(vol * 100)}"><span id="bzVolV">${Math.round(vol * 100)}</span></div>
+        <p class="muted" style="font-size:.82rem;margin:6px 0 0">🎵⭕❌の音は、この画面（いま操作しているPC・スマホ）から鳴ります。モニタからは鳴りません</p>
         <div class="ctl"><button id="bzEnd">早押しを終わる（待機画面へ）</button></div>`;
       $('#bzReset').onclick = resetBuzz; $('#bzEnd').onclick = backToWait;
+      $('#bzQ').onclick = () => SFX.playVol('shutsudai', bzVol());
       $('#bzOk').onclick = () => SFX.playVol('seikai', bzVol()); $('#bzNg').onclick = () => SFX.playVol('fuseikai', bzVol());
       $('#bzVol').oninput = e => { store.set(BZ_VOL_KEY, +e.target.value / 100); $('#bzVolV').textContent = e.target.value; };
       return;
