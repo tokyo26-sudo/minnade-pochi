@@ -624,6 +624,7 @@ function zoomImg(id) { const d = IMG.get(id); if (d) openModal(`<img class="zoom
 /* =========================================================
    効果音（sounds/ のファイルを鳴らす。なければ手作りの音で代わりに鳴らす）
    効果音素材：効果音ラボ https://soundeffect-lab.info/
+   早押しボタンの音（buzz.mp3）：OtoLogic https://otologic.jp/ （CC BY 4.0）
    ========================================================= */
 const SFX_ON_KEY = 'evapp_sfx_on', SFX_VOL_KEY = 'evapp_sfx_vol', NOROLL_KEY = 'evapp_noroll', BZ_VOL_KEY = 'evapp_bz_vol';
 const bzVol = () => { const v = Number(store.get(BZ_VOL_KEY, 0.8)); return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.8; };
@@ -844,7 +845,7 @@ const HELP_MASTER = `<div class="help">
   </ul>
   <h3>参加する人へ</h3>
   ${HELP_PART}
-  <p class="credit">効果音：<a href="https://soundeffect-lab.info/" target="_blank" rel="noopener">効果音ラボ</a></p>
+  <p class="credit">効果音：<a href="https://soundeffect-lab.info/" target="_blank" rel="noopener">効果音ラボ</a>／<a href="https://otologic.jp/" target="_blank" rel="noopener">OtoLogic</a>（CC BY 4.0）</p>
   <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="primary" data-close>閉じる</button></div>
 </div>`;
 function showHelp(partOnly) {
