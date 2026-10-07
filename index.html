@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.13.2</title>
+<title>みんなでポチッ v0.14</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -60,6 +60,12 @@ small,.muted{color:var(--sub)}
 .lead{color:var(--sub);margin:.4em 0 20px}
 .demo-banner{background:#fff4d6;border:1px solid #f5d27a;border-radius:12px;padding:10px 14px;font-size:.88rem;margin-bottom:14px}
 .modes{display:grid;gap:8px}
+.more summary{cursor:pointer;font-weight:800;list-style:none;color:var(--sub)}
+.more summary::-webkit-details-marker{display:none}
+.more summary small{font-weight:600}
+.more[open] summary{margin-bottom:6px}
+.more-sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.more-sec h3{margin:0 0 8px;font-size:1rem}
 .mode{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
 .mode input{width:auto;margin-top:5px;accent-color:var(--brand)}
 .mode:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
@@ -127,6 +133,8 @@ body.v-disp.idle{cursor:none}
 .st-lead{font-size:5cqh;font-weight:800;margin-bottom:3cqh;line-height:1.3}
 .st-pinlabel{font-size:3.2cqh;opacity:.7}
 .st-pin{font-size:min(17cqh,12cqw);font-weight:900;letter-spacing:.1em;font-variant-numeric:tabular-nums;color:#ffd54a;line-height:1.05}
+.st-pinhide{font-size:min(7cqh,5cqw);font-weight:900;color:#ffd54a;line-height:1.3;margin-top:.6cqh}
+.st-wjoin .st-pinhide{font-size:min(5cqh,3.6cqw)}
 .st-url{font-size:2.5cqh;opacity:.6;margin-top:2.4cqh;word-break:break-all;max-width:46cqw}
 .st-demo{margin-top:2cqh;font-size:2.4cqh;background:#ffb020;color:#1d2433;border-radius:1cqh;padding:.6cqh 1.2cqh;font-weight:800;max-width:46cqw}
 .st-count{font-size:5.4cqh;font-weight:900}
@@ -382,6 +390,7 @@ img[data-img]:not([src]){visibility:hidden}
 .bzli b{font-size:1.1rem}
 .bzli span{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bzli small{font-variant-numeric:tabular-nums}
+.pinoff{background:#1d2433!important;color:#fff!important;border-color:#1d2433!important}
 .sfxind{font-size:.85rem;font-weight:800}
 .sfxind.warn{color:var(--ng)}
 .set-h{font-size:1rem;margin:18px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
@@ -748,7 +757,7 @@ const SFX = (() => {
     if (!enabled()) { stopLoop(); Object.keys(shots).forEach(stop); }
   }
   function setCfg(c) {
-    const n = { on: !c || c.on !== false, vol: clamp(c && c.vol, 0, 1, 0.8), per: c && c.per && typeof c.per === 'object' ? c.per : {} };
+    const n = { on: !c || c.on !== false, vol: clamp(c && c.vol, 0, 1, 0.8), per: c && c.per && typeof c.per === 'object' ? c.per : {}, showPin: !c || c.showPin !== false };
     if (JSON.stringify(n) === JSON.stringify(CFG)) return; CFG = n; refresh();
   }
   const duration = (name, d) => bufs[name] ? bufs[name].duration : d;
@@ -781,7 +790,7 @@ const HELP_MASTER = `<div class="help">
   </ul>
   <h3>はじめての準備（マスター）</h3>
   <h4>1. 部屋をつくる</h4>
-  <p>トップで部屋の名前と「名前のあつかいの最初の設定」を選び、「部屋をつくる」を押します。</p>
+  <p>トップで部屋の名前を入れて、「部屋をつくる」を押します。名前のあつかいは、質問ごとに選べます（さいしょは 👤 匿名）。</p>
   <ul>
     <li>🔒 完全匿名：だれが何を答えたか、マスターにもわかりません</li>
     <li>👤 匿名：名前はマスターだけが見られます</li>
@@ -793,6 +802,7 @@ const HELP_MASTER = `<div class="help">
   <p class="note">🔊 効果音を鳴らすには、表示用ウィンドウを一度クリックしてください（ブラウザの決まりで、さわるまで音が出せません）。左下に「音をオンにする」が出ているときは、まだ音が出ない状態です。</p>
   <h4>3. 参加してもらう</h4>
   <p>モニタに出ているQRコードをスマホで読み、名前とカギの数字（4ケタ）を入れると参加できます。途中からの参加もOKです。</p>
+  <p class="note">🔑 オンライン配信もしていて、会場の人だけに参加してほしいとき → 操作画面の上の「🖥 モニタに表示中」を押して「🙈 モニタではかくし中」にすると、モニタにはQRコードだけが出ます。カギの数字は会場で口頭で伝えてください（QRコードには数字は入っていません）。</p>
   <h3>アンケートを出す</h3>
   <ul>
     <li><b>⚡ サッと出題</b>：その場で質問文とボタンを決めて、すぐ出せます</li>
@@ -849,7 +859,7 @@ const HELP_MASTER = `<div class="help">
     <li>「📤 ファイルに書き出す」で質問セットを保存できます</li>
   </ul>
   <h4>前日に準備して、当日使うには</h4>
-  <p>前日：練習用の部屋で質問を作り、ファイルに書き出す<br>当日：トップの「📂 ファイルから読みこむ」で質問セットを選んでから部屋をつくる<br>→ 部屋の名前・名前のあつかい・質問（画像も）が入った部屋ができます</p>
+  <p>前日：練習用の部屋で質問を作り、ファイルに書き出す<br>当日：トップの「▼ そのほか」→「📂 質問セットのファイルから部屋をつくる」でファイルを選んでから、部屋をつくる<br>→ 部屋の名前・名前のあつかい・質問（画像も）が入った部屋ができます</p>
   <p class="note">※部屋は24時間で消えるので、当日につくるのがおすすめです。</p>
   <h3>スマホをリモコンにする</h3>
   <p>「🔗 URL・QR」の「リモコン用」のQRをスマホで読むと、スマホで操作できます。モニタ側のPCでは「表示用」のURLを開いておきます。</p>
@@ -858,7 +868,7 @@ const HELP_MASTER = `<div class="help">
   <ul>
     <li>「📜 履歴」タブで、出した質問と結果をふり返れます。「🖥 結果をモニタに出す」で、さっきの結果をもう一度映せます</li>
     <li>「💾 結果を保存」で、記録ファイル（JSON）やCSVをダウンロードできます</li>
-    <li>記録ファイルは、トップの「📂 記録を見る」で、あとからいつでも開けます</li>
+    <li>記録ファイルは、トップの「▼ そのほか」→「📂 記録を見る」で、あとからいつでも開けます</li>
     <li>部屋と結果は <b>24時間で自動的に消えます</b>。「部屋を終了」を押すと、その場で消えます。残したいときは、先に保存してください</li>
   </ul>
   <h3>こまったとき</h3>
@@ -1119,44 +1129,45 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.13.2</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
       <label class="f"><span>部屋の名前（モニタに出ます）</span><input id="lTitle" maxlength="40" placeholder="例：秋の交流会"></label>
-      <div class="f"><span>名前のあつかいの最初の設定（質問ごとに変えられます）</span>
-        <div class="modes">${Object.entries(MODES).map(([k, m]) => `<label class="mode"><input type="radio" name="lMode" value="${k}" ${k === 'master' ? 'checked' : ''}><div><b>${m.icon} ${m.name}</b><br><small>${m.desc}</small></div></label>`).join('')}</div>
-      </div>
-      <div class="f"><span>質問を前もって用意したとき（任意）</span><label class="btn">📂 ファイルから読みこむ<input type="file" id="lFile" accept=".json,application/json" hidden></label>
-        <small class="muted" style="display:block;margin-top:4px">「質問セット」や「記録ファイル」を選ぶと、部屋の名前・名前のあつかい・質問がまとめて入ります</small></div>
       <div class="fileinfo" id="lFileInfo" hidden></div>
       ${DEMO ? '' : store.get(PW_KEY) ? `<div class="f pwsaved"><span>マスターパスワード</span>🔑 このPCに保存ずみ <button class="mini" id="lPwForget">変更・忘れる</button></div>`
         : `<label class="f"><span>マスターパスワード</span><input id="lPw" type="password" autocomplete="current-password"></label>
            <label class="chk"><input type="checkbox" id="lPwRem" checked> このPCで覚える（次から入力しなくてよくなります。共用PCでは外してね）</label>`}
       <button class="primary big" id="lCreate">部屋をつくる</button>
+      <p class="muted" style="margin:10px 0 0;font-size:.82rem">名前のあつかい（🔒 完全匿名・👤 匿名・📢 記名）は、質問ごとに選べます（さいしょは 👤 匿名）</p>
     </div>
     ${rooms.length ? `<div class="card"><h3>🗂 このブラウザでつくった部屋 <small>（24時間で消えます）</small></h3>
-      ${rooms.map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">コード ${esc(r.code)}</span><span class="chip">${fmtTime(r.created)} 作成</span><span class="chip">${modeOf(r.anon).icon} ${modeOf(r.anon).name}</span></div></div><a class="btn" href="${esc(pageUrl({ op: r.code }))}">ひらく</a></div>`).join('')}
+      ${rooms.map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">コード ${esc(r.code)}</span><span class="chip">${fmtTime(r.created)} 作成</span></div></div><a class="btn" href="${esc(pageUrl({ op: r.code }))}">ひらく</a></div>`).join('')}
     </div>` : ''}
-    <div class="card"><h3>📂 記録を見る</h3>
+    <details class="card more" id="lMore"><summary>▼ そのほか <small>（質問セットから部屋をつくる・記録を見る・コードで参加）</small></summary>
+    <div class="more-sec"><h3>📂 質問セットのファイルから部屋をつくる</h3>
+      <p class="muted" style="margin:0 0 10px;font-size:.88rem">前もって用意した「質問セット」や「記録ファイル」を選ぶと、部屋の名前・質問（画像も）が入った部屋をつくれます。</p>
+      <label class="btn">📂 ファイルを選ぶ<input type="file" id="lFile" accept=".json,application/json" hidden></label></div>
+    <div class="more-sec"><h3>📂 記録を見る</h3>
       <p class="muted" style="margin:0 0 10px;font-size:.88rem">「結果を保存」でダウンロードした記録ファイル（.json）を開くと、サーバーから消えたあとでも質問と結果が見られます。</p>
       <label class="btn">📂 記録ファイルを開く<input type="file" id="lRec" accept=".json,application/json" hidden></label>
-      ${listBackups().length ? `<div style="margin-top:14px"><div class="f"><span>💾 このPCに残っている控え</span></div>${listBackups().map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">${fmtTime(r.saved_at)} 保存</span><span class="chip">${r.runs.length}問</span><span class="chip">${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}</span>${r._demo ? '<span class="chip">🧪 おためし</span>' : ''}</div></div><div class="acts"><button data-bk="${esc(r._key)}">ひらく</button><button class="danger" data-bkdel="${esc(r._key)}">削除</button></div></div>`).join('')}</div>` : ''}
+      ${listBackups().length ? `<div style="margin-top:14px"><div class="f"><span>💾 このPCに残っている控え</span></div>${listBackups().map(r => `<div class="qitem"><div class="qt"><b>${esc(r.title || '（名前なし）')}</b><div class="chips"><span class="chip">${fmtTime(r.saved_at)} 保存</span><span class="chip">${r.runs.length}問</span>${r._demo ? '<span class="chip">🧪 おためし</span>' : ''}</div></div><div class="acts"><button data-bk="${esc(r._key)}">ひらく</button><button class="danger" data-bkdel="${esc(r._key)}">削除</button></div></div>`).join('')}</div>` : ''}
     </div>
-    <div class="card"><h3>🙋 参加する</h3>
+    <div class="more-sec"><h3>🙋 部屋コードで参加する</h3>
       <div class="row"><input id="lCode" placeholder="部屋コード（6文字）" maxlength="6" autocapitalize="characters" style="flex:1;text-transform:uppercase"><button id="lJoin">参加</button></div>
       <p class="muted" style="margin:.6em 0 0;font-size:.85rem">ふつうは会場のQRコードから入れます</p>
     </div>
+    </details>
   </div>`;
-  let pendingQ = [], pendingImgs = {};
+  let pendingQ = [], pendingImgs = {}, pendingAnon = 'master';
   const fg = $('#lPwForget'); if (fg) fg.onclick = () => { store.del(PW_KEY); landingView(); };
   function applyFile(got, from) {
     pendingQ = got.questions || []; pendingImgs = got.images || {};
     if (got.title) $('#lTitle').value = got.title;
-    if (got.anon_mode && MODES[got.anon_mode]) { const r = $(`input[name=lMode][value=${got.anon_mode}]`); if (r) r.checked = true; }
+    if (got.anon_mode && MODES[got.anon_mode]) pendingAnon = got.anon_mode;  // ファイルの部屋の設定を引きつぐ
     const info = $('#lFileInfo'); info.hidden = false;
     info.innerHTML = `📋 ${esc(from)}：${pendingQ.length}問の質問${Object.keys(pendingImgs).length ? `と画像${Object.keys(pendingImgs).length}枚` : ''}を読みこみました（部屋をつくると入ります）<button class="mini" id="lFileX">✕ やめる</button>`;
-    $('#lFileX').onclick = () => { pendingQ = []; pendingImgs = {}; info.hidden = true; };
+    $('#lFileX').onclick = () => { pendingQ = []; pendingImgs = {}; pendingAnon = 'master'; info.hidden = true; };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   $('#lFile').onchange = async e => {
@@ -1165,7 +1176,7 @@ function landingView(prefill) {
     catch { toast('読みこめませんでした（このアプリで書き出したファイルを選んでね）', 4000); }
   };
   if (prefill && (!prefill.keep || (prefill.questions && prefill.questions.length))) applyFile(prefill, prefill.from || 'ファイル');
-  else if (prefill && prefill.keep) { if (prefill.title) $('#lTitle').value = prefill.title; const r = $(`input[name=lMode][value=${prefill.anon_mode}]`); if (r) r.checked = true; }
+  else if (prefill && prefill.keep) { if (prefill.title) $('#lTitle').value = prefill.title; if (MODES[prefill.anon_mode]) pendingAnon = prefill.anon_mode; }
   $('#lRec').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try { const rec = parseRecord(JSON.parse(await f.text())); if (!rec) throw 0; recordView(rec, false); }
@@ -1179,7 +1190,7 @@ function landingView(prefill) {
   $('#lCreate').onclick = async () => {
     const btn = $('#lCreate'); btn.disabled = true;
     const title = $('#lTitle').value.trim();
-    const anon = ($('input[name=lMode]:checked') || {}).value || 'master';
+    const anon = MODES[pendingAnon] ? pendingAnon : 'master';
     const savedPw = DEMO ? '' : store.get(PW_KEY);
     const pw = DEMO ? '' : (savedPw || $('#lPw').value);
     const res = await API.createRoom({ password: pw, title, anon });
@@ -1187,7 +1198,7 @@ function landingView(prefill) {
     if (!DEMO && !res.ok && res.error === 'bad_password' && savedPw) {
       store.del(PW_KEY); btn.disabled = false;
       toast('保存していたパスワードが合いません。もう一度入れてください', 4500);
-      return landingView({ questions: pendingQ, title: $('#lTitle').value, anon_mode: anon, from: 'さっきのファイル', keep: true });
+      return landingView({ questions: pendingQ, images: pendingImgs, title: $('#lTitle').value, anon_mode: anon, from: 'さっきのファイル', keep: true });
     }
     if (!res.ok) { btn.disabled = false; return toast(errMsg(res.error)); }
     if (pendingQ.length) {
@@ -1332,6 +1343,10 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     return `<div class="st"><div class="bz-head">🔴 早押し<small>第${Number(bz.n) || 1}問</small></div>${body}
       <div class="st-foot"><span>🙋 押した人 <b>${list.length}</b>人</span><span class="st-mode">📢 早押しは名前が出ます</span></div></div>`;
   }
+  // カギの数字：オフのときは「会場でお伝えします」（オンライン配信の人に入られないように）
+  const pinShown = room => ((room.sfx || {}).cfg || {}).showPin !== false;
+  const pinHtml = room => pinShown(room) ? `<div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div>`
+    : `<div class="st-pinlabel">カギの数字</div><div class="st-pinhide">🔑 会場でお伝えします</div>`;
   function build(screen, room, st) {
     const run = st && st.run;
     if (screen === 'buzz') return buzzStage(room, st);
@@ -1341,7 +1356,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
         <div class="st-join">
           ${qr ? `<div class="st-qr"><img src="${qr}" alt="参加用QRコード"></div>` : ''}
           <div><div class="st-lead">スマホで${qr ? 'QRコードを読みこんで' : '下のURLを開いて'}<br>参加してね！</div>
-            <div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div>
+            ${pinHtml(room)}
             <div class="st-url">${esc(joinUrl)}</div>${DEMO ? '<div class="st-demo">🧪 おためしモード：このPCの中だけで動いています（スマホからは参加できません）</div>' : ''}</div>
         </div>
         <div class="st-foot"><span class="st-count">🙋 <b data-pc>0</b>人 参加中</span><span class="st-mode">名前のあつかいは、質問ごとにスマホに表示されます</span></div></div>`;
@@ -1350,7 +1365,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     if (isTextRun(run)) {
       if (screen === 'open') {
         const qr = qrDataUrl(joinUrl), im = qimg(run);
-        const join = `<div class="st-wjoin">${qr ? `<div class="st-wqr"><img src="${qr}" alt="参加用QRコード"></div>` : ''}<div>${im ? '<div class="st-wtop">✍️ スマホで書いてね！</div>' : ''}<div class="st-wlead">まだの人は<br>QRから参加してね</div><div class="st-pinlabel">カギの数字</div><div class="st-pin">${esc(room.pin)}</div></div></div>`;
+        const join = `<div class="st-wjoin">${qr ? `<div class="st-wqr"><img src="${qr}" alt="参加用QRコード"></div>` : ''}<div>${im ? '<div class="st-wtop">✍️ スマホで書いてね！</div>' : ''}<div class="st-wlead">まだの人は<br>QRから参加してね</div>${pinHtml(room)}</div></div>`;
         const left = im ? `<div class="st-wimg">${imgTag(im)}</div>` : `<div class="st-wmsg"><b>✍️ スマホで<br>書いてね！</b><span>${TEXT_MAX}文字まで・締め切りまで書き直せます</span></div>`;
         return `<div class="st">${qHead({ ...run, img: null }, 'big', false)}${timer()}<div class="st-wmain">${left}${join}</div>${foot(room, run)}</div>`;
       }
@@ -1445,7 +1460,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     let lk = '';
     if (screen === 'buzz') { const l = opts.getBuzz ? opts.getBuzz(st.buzz.round) : []; lk = st.buzz.round + ':' + st.buzz.n + ':' + l.length + ':' + l.slice(0, 5).map(x => x.name + x.ms).join(','); }
     if (screen === 'tiles') { const l = opts.getTexts ? opts.getTexts(run) : null; lk = l ? l.length + ':' + l.map(t => t.eid + (t.edited ? '*' : '')).join(',').length + ':' + (l.length ? l[l.length - 1].eid : '') : 'none'; }
-    const k = [screen, run && run.id, run && run.reveal, run && run.showCount, run && run.hideQ, run && run.anon, st.pk, st.tk, lk, w.room.pin, w.room.title, qrReady, el.clientWidth > 0].join('|');
+    const k = [screen, run && run.id, run && run.reveal, run && run.showCount, run && run.hideQ, run && run.anon, st.pk, st.tk, lk, w.room.pin, pinShown(w.room), w.room.title, qrReady, el.clientWidth > 0].join('|');
     if (k !== key) {
       key = k; el.innerHTML = build(screen, w.room, st); hydrateImgs(el); fit();
       if (screen === 'tiles') applyScroll(st, true);
@@ -2146,7 +2161,7 @@ function operatorView(code) {
     <div class="op-room">
       <div class="op-kv"><label>部屋</label><b id="hTitle">…</b><button class="mini" id="btnTitle" title="部屋の名前を変える">✏️</button></div>
       <div class="op-kv"><label>コード</label><b>${esc(code)}</b></div>
-      <div class="op-kv"><label>カギ</label><b id="hPin">----</b><button class="mini" id="btnPin" title="カギの数字を作り直す">↻ 作り直す</button></div>
+      <div class="op-kv"><label>カギ</label><b id="hPin">----</b><button class="mini" id="btnPin" title="カギの数字を作り直す">↻ 作り直す</button><button class="mini" id="btnPinShow" title="モニタにカギの数字を出すかどうか"></button></div>
       <div class="op-kv"><label>参加</label><b id="hCount">0</b>人</div>
       <div class="op-kv"><b id="hMode" style="font-size:.9rem"></b></div>
       <div class="op-kv"><b id="hSfx" class="sfxind"></b></div>
@@ -2189,7 +2204,7 @@ function operatorView(code) {
         <div class="row"><button class="primary" id="edSave">保存する</button><button id="edNew">新しく書く</button></div></div>
       <div class="card"><h3>📋 この部屋の質問</h3><div id="legacyBox"></div><div id="bankEdit"></div>
         <div class="row" style="margin-top:10px"><button id="bankExp">📤 ファイルに書き出す</button><label class="btn">📥 ファイルから読みこむ<input type="file" id="bankImp" accept=".json,application/json" hidden></label></div>
-        <p class="muted" style="font-size:.82rem;margin-bottom:0">質問はこの部屋の中（サーバー）に保存されるので、スマホのリモコンからも見えます。部屋が消えると一緒に消えるので、別の日に使うときは「書き出す」→ トップの「ファイルから読みこむ」で部屋をつくってね。</p></div>
+        <p class="muted" style="font-size:.82rem;margin-bottom:0">質問はこの部屋の中（サーバー）に保存されるので、スマホのリモコンからも見えます。部屋が消えると一緒に消えるので、別の日に使うときは「書き出す」→ トップの「▼ そのほか」→「質問セットのファイルから部屋をつくる」でね。</p></div>
     </section>
   </div>`;
 
@@ -2262,6 +2277,8 @@ function operatorView(code) {
     if (hashKey && !mine) saveMyRoom({ code, secret, title: r.title, anon: r.anon_mode, created: r.created_at });
     $('#hTitle').textContent = r.title || '（名前なし）';
     $('#hPin').textContent = r.pin;
+    const ps = SFX.cfg().showPin !== false, pb = $('#btnPinShow'), pt = ps ? '🖥 モニタに表示中' : '🙈 モニタではかくし中';
+    if (pb.textContent !== pt) { pb.textContent = pt; pb.classList.toggle('pinoff', !ps); }
     $('#hCount').textContent = w.participants;
     $('#hMode').textContent = `名前の最初の設定：${modeOf(r.anon_mode).icon} ${modeOf(r.anon_mode).name}`;
     if (Date.now() > cfgDirtyUntil) SFX.setCfg((r.sfx || {}).cfg);
@@ -2691,6 +2708,11 @@ function operatorView(code) {
     const win = window.open(dispUrl, 'evapp_disp_' + code, 'popup=yes,width=1280,height=760');
     if (!win) toast('ポップアップがブロックされました。「URL・QR」の表示用URLを使ってください', 4000);
     else toast('開いたウィンドウをモニタ側へ移して、ダブルクリックで全画面に', 4500);
+  };
+  $('#btnPinShow').onclick = () => {
+    const show = SFX.cfg().showPin === false;
+    setRoomCfg({ ...SFX.cfg(), showPin: show }); onUpdate(); stage.reset(); stage.update();
+    toast(show ? 'モニタにカギの数字を出しました' : 'モニタのカギの数字をかくしました（会場で口頭で伝えてね）', 3500);
   };
   $('#btnPin').onclick = async () => {
     if (!confirm('カギの数字を作り直しますか？\n（もう入っている人はそのまま。新しく入る人は新しい数字が必要になります）')) return;
