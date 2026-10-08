@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.14.2</title>
+<title>みんなでポチッ v0.14.3</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -352,6 +352,7 @@ img[data-img]:not([src]){visibility:hidden}
 /* 早押し：モニタ */
 .bz-head{display:flex;align-items:baseline;justify-content:center;gap:2cqw;font-size:6.4cqh;font-weight:900;margin-bottom:1.4cqh}
 .bz-head small{font-size:.6em;opacity:.8}
+.bz-head.bz-qno{font-size:11cqh;line-height:1;color:#ffc93c;letter-spacing:.04em;text-shadow:0 .04em .18em rgba(0,0,0,.45);margin-bottom:2cqh}
 .bz-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:1.8cqh;min-height:0;padding:0 5cqw}
 .bz-row{display:grid;grid-template-columns:14cqh minmax(0,1fr) auto;align-items:center;gap:2.4cqw;background:rgba(255,255,255,.09);border-radius:2cqh;padding:0 2.6cqw;height:11.5cqh}
 .bz-row.r0{background:linear-gradient(90deg,#ffd54a,#ffb020);color:#1d2433;height:18cqh;box-shadow:0 0 4cqh rgba(255,213,74,.45)}
@@ -1130,7 +1131,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14.2</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14.3</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -1341,7 +1342,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     const top = list.slice(0, 5), first = top.length ? top[0].ms : 0;
     const body = top.length ? `<div class="bz-wrap">${top.map((x, i) => `<div class="bz-row r${i} ${i >= seen ? 'anim' : ''}"><span class="bz-rank">${MEDAL[i] || (i + 1)}</span><span class="bz-name">${esc(x.name)}</span><span class="bz-diff">${i ? `+${((x.ms - first) / 1000).toFixed(2)}秒` : ''}</span></div>`).join('')}</div>`
       : `<div class="bz-empty"><b>🔴</b><span>わかったら、スマホのボタンを押してね！</span></div>`;
-    return `<div class="st"><div class="bz-head">🔴 早押し${Number(bz.n) > 0 && !bz.hideNo ? `<small>第${Number(bz.n)}問</small>` : ''}</div>${body}
+    return `<div class="st">${Number(bz.n) > 0 && !bz.hideNo ? `<div class="bz-head bz-qno">第${Number(bz.n)}問</div>` : '<div class="bz-head">🔴 早押し</div>'}${body}
       <div class="st-foot"><span>🙋 押した人 <b>${list.length}</b>人</span><span class="st-mode">📢 早押しは名前が出ます</span></div></div>`;
   }
   // カギの数字：オフのときは「会場でお伝えします」（オンライン配信の人に入られないように）
