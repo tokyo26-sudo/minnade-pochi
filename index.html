@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.14.3</title>
+<title>みんなでポチッ v0.14.4</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -202,6 +202,15 @@ body.v-op{background:#eef0f5}
 .toggles button{font-size:.85rem;padding:.4em .8em}
 .toggles button.on{background:#1d2433;color:#fff;border-color:#1d2433}
 .preview{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0b1026;position:relative}
+.pv-h{display:flex;align-items:center;gap:8px}.pv-size{margin-left:auto;display:flex;gap:4px}.pv-size .mini.on{background:var(--accent,#f0643c);color:#fff;border-color:transparent}
+.pv-row{display:flex;gap:14px;align-items:flex-start}.pv-main{flex:1;min-width:0}
+.pv-row.small .pv-main{flex:0 0 72%}.pv-side{display:none;flex:1;min-width:0;flex-direction:column;gap:8px}.pv-row.small .pv-side{display:flex}
+.pv-it{background:#f4f6fb;border-radius:10px;padding:8px 10px;line-height:1.25}.pv-it small{display:block;color:var(--sub);font-size:.74rem;font-weight:700}.pv-it b{font-size:1.25rem}.pv-it b.sm{font-size:.86rem}
+.pv-it.hurry b{color:#e5484d}
+.pv-hint{margin-top:6px;font-size:.84rem;font-weight:700;color:var(--sub)}
+#preview .tt[data-eid]{cursor:pointer;transition:outline-color .15s}#preview .tt[data-eid]:hover{outline:3px solid #ffc93c;outline-offset:-3px;z-index:2}
+#preview.backable{cursor:pointer}
+@media (max-width:600px){.pv-row.small{flex-direction:column}.pv-row.small .pv-main{flex-basis:auto;width:100%}.pv-row.small .pv-side{flex-direction:row;flex-wrap:wrap;width:100%}.pv-row.small .pv-it{flex:1 1 40%}}
 .ores-q{font-weight:800;margin-bottom:6px}
 .ores-row{display:grid;grid-template-columns:minmax(4em,auto) 1fr auto;gap:10px;align-items:center;margin:7px 0}
 .ores-lab{font-weight:800;padding:.15em .6em;border-radius:7px;color:#fff;background:var(--c);max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
@@ -807,7 +816,7 @@ const HELP_MASTER = `<div class="help">
   <p class="note">🔑 オンライン配信もしていて、会場の人だけに参加してほしいとき → 操作画面の上の「🖥 モニタに表示中」を押して「🙈 モニタではかくし中」にすると、モニタにはQRコードだけが出ます。カギの数字は会場で口頭で伝えてください（QRコードには数字は入っていません）。</p>
   <h3>アンケートを出す</h3>
   <ul>
-    <li><b>⚡ サッと出題</b>：その場で質問文とボタンを決めて、すぐ出せます</li>
+    <li><b>⚡ サッとアンケート</b>：その場で質問文とボタンを決めて、すぐ出せます</li>
     <li><b>📋 この部屋の質問</b>：用意しておいた質問を、好きな順番で出せます</li>
     <li>制限時間がくると自動で締め切ります。「⏹ 締め切る」で途中でも締め切れます</li>
     <li>「あとで発表」の質問は、「🎉 結果発表！」を押すとドラムロールのあとモニタに結果が出ます。「ロールなしで発表」に印を付けると、すぐ出ます</li>
@@ -840,7 +849,7 @@ const HELP_MASTER = `<div class="help">
   </ul>
   <h3>❓ 質問文をかくす（答えから質問を当てるゲームなど）</h3>
   <ul>
-    <li>ふだんは質問文が出ます。質問をつくるときに「モニタに質問文を出さない」に印を付けると（サッと出題では、出題すると印は自動ではずれます）、モニタには「❓ 何の質問でしょう？」と出ます（参加者のスマホには質問が出ます）</li>
+    <li>ふだんは質問文が出ます。質問をつくるときに「モニタに質問文を出さない」に印を付けると（サッとアンケートでは、出題すると印は自動ではずれます）、モニタには「❓ 何の質問でしょう？」と出ます（参加者のスマホには質問が出ます）</li>
     <li>操作画面の「🎉 質問を発表！」で、モニタに質問文を出します（ジャン！と鳴ります）。とちゅうで「❓ モニタの質問文をかくす」にもできます</li>
     <li>例：壇上の人が目隠しをしているあいだに「免許をとった年齢は？」を自由に書くで集める → タイルで出して → 何の数字か当ててもらう</li>
   </ul>
@@ -1131,7 +1140,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14.3</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14.4</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -1330,7 +1339,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     const anim = animTk !== st.tk, step = Math.min(220, Math.max(25, Math.round(4500 / n)));
     if (anim) { animTk = st.tk; if (opts.onTiles) opts.onTiles(n, step, st.tk); }
     return `<div class="st">${head}<div class="st-ttwrap"><div class="st-tt" data-cols="${c}" data-rv="${rv}" style="--cols:${c}">${list.map((t, i) =>
-      `<div class="tt ${anim ? 'anim' : ''}" style="--c:${colorOf(i)};${anim ? `animation-delay:${i * step}ms` : ''}"><div class="tt-b"><span>${esc(t.body)}</span></div>${named && t.name ? `<div class="tt-n">${esc(t.name)}</div>` : ''}</div>`).join('')}</div>
+      `<div class="tt ${anim ? 'anim' : ''}" data-eid="${esc(t.eid || '')}" style="--c:${colorOf(i)};${anim ? `animation-delay:${i * step}ms` : ''}"><div class="tt-b"><span>${esc(t.body)}</span></div>${named && t.name ? `<div class="tt-n">${esc(t.name)}</div>` : ''}</div>`).join('')}</div>
       <div class="st-more" hidden>▼ まだあります</div></div>
       <div class="st-foot"><span>📮 <b>${n}</b>件</span><span class="st-mode">${modeOf(runAnon(run, room.anon_mode)).icon} ${modeOf(runAnon(run, room.anon_mode)).name}</span></div></div>`;
   }
@@ -2203,7 +2212,7 @@ function operatorView(code) {
       <div class="left">
         <div class="card"><h3>🔴 早押し</h3><p class="muted" style="margin:0 0 10px;font-size:.86rem">参加者のスマホに大きなボタンが出ます。押した順に、上位5人の名前がモニタに出ます（早押しはいつも記名）</p>
           <button class="primary big" id="bzStart" style="width:100%">🔴 早押しをはじめる</button></div>
-        <div class="card"><h3>⚡ サッと出題</h3><div id="quick">${qFields('qk', true)}</div><button class="primary big" id="qkGo" style="width:100%">この内容で出題する</button></div>
+        <div class="card"><h3>⚡ サッとアンケート</h3><div id="quick">${qFields('qk', true)}</div><button class="primary big" id="qkGo" style="width:100%">この内容で出題する</button></div>
         <div class="card"><h3>📋 用意した質問 <small id="bankN"></small></h3><div id="bankRun"></div></div>
         <div class="card" id="dummyCard" hidden><h3>🧪 テスト用ダミー <small id="botN"></small></h3><p class="muted" style="margin-top:0;font-size:.88rem">ダミーの参加者を入れると、出題したときに勝手に投票してくれます。本番の前に「全員帰らせる」を押してね。（⚙️ 設定でかくせます）</p>
           <div class="row"><button id="bot10">ダミーを10人入れる</button><button id="bot30">30人入れる</button><button class="danger" id="botKick">全員帰らせる</button></div>
@@ -2211,7 +2220,9 @@ function operatorView(code) {
       </div>
       <div class="right">
         <div class="card"><div id="status"></div></div>
-        <div class="card"><h3>🖥 モニタのようす</h3><div class="preview"><div id="preview" style="position:absolute;inset:0"></div></div></div>
+        <div class="card"><h3 class="pv-h">🖥 モニタのようす <span class="pv-size"><button class="mini" data-pvsize="s">小</button><button class="mini" data-pvsize="l">大</button></span></h3>
+          <div class="pv-row" id="pvRow"><div class="pv-main"><div class="preview"><div id="preview" style="position:absolute;inset:0"></div></div><div class="pv-hint" id="pvHint" hidden></div></div>
+          <div class="pv-side" id="pvSide"></div></div></div>
         <div class="card"><h3 id="opresH">📊 集計 <small>（マスターだけに見えています）</small></h3><div id="opres"></div></div>
       </div>
     </section>
@@ -2313,6 +2324,38 @@ function operatorView(code) {
     const bs = $('#bzStart'); bs.disabled = st.phase === 'buzz'; bs.textContent = st.phase === 'buzz' ? '🔴 早押し中（右で操作してね）' : '🔴 早押しをはじめる';
   }
 
+  /* --- モニタのようす：大きさ（このPCに覚える）と「いまの様子」 --- */
+  const PV_KEY = 'evapp_pvsize';
+  function applyPvSize() {
+    const sz = store.get(PV_KEY, 's') === 'l' ? 'l' : 's';
+    $('#pvRow').classList.toggle('small', sz === 's');
+    $$('[data-pvsize]').forEach(b => b.classList.toggle('on', b.dataset.pvsize === sz));
+    setTimeout(() => { stage.reset(); stage.update(); }, 0);
+  }
+  $$('[data-pvsize]').forEach(b => b.onclick = () => { store.set(PV_KEY, b.dataset.pvsize); applyPvSize(); });
+  let pvKey = '';
+  function renderPvSide() {
+    const st = cur(), run = st.run, it = (lb, v, cls = '') => `<div class="pv-it ${cls}"><small>${lb}</small><b class="${String(v).length > 10 ? 'sm' : ''}">${v}</b></div>`;
+    let ans = '―';
+    if (st.phase === 'buzz' && st.buzz) ans = `${bf.get(st.buzz.round).length}人`;
+    else if (run && st.phase !== 'waiting') {
+      if (isTextRun(run)) ans = tx.runId === run.id ? `${tx.list.length}件` : '…';
+      else { const tot = w.resultsRun === run.id && w.results ? w.results.total : null; ans = tot == null ? '…' : `${tot} / ${w.participants}人`; }
+    }
+    let rem = '―', hurry = false;
+    if (st.phase === 'open' && st.ends_at) { const r = Math.max(0, st.ends_at - Clock.now()); rem = fmtSec(Math.ceil(r / 1000)) + (r < 60000 ? '秒' : ''); hurry = r <= 10000; }
+    else if (st.phase === 'open') rem = '制限なし';
+    const snd = ($('#hSfx') && $('#hSfx').textContent || '').replace(/^🔊\s*音：/, '').replace(/（.*$/, '') || '―';
+    const lbAns = st.phase === 'buzz' ? '🙋 押した人' : isTextRun(run) && st.phase !== 'waiting' ? '📮 とどいた' : '📮 回答';
+    const h = it('👥 参加', `${w.participants}人`) + it(lbAns, ans) + it('⏱ のこり時間', rem, hurry ? 'hurry' : '') + it('🔊 音の鳴る場所', esc(snd));
+    if (h !== pvKey) { pvKey = h; $('#pvSide').innerHTML = h; }
+    const hint = $('#pvHint'), canPick = isTextRun(run) && st.phase === 'result' && st.view === 'tiles', canBack = isTextRun(run) && st.phase === 'result' && st.pick && st.tback;
+    $('#preview').classList.toggle('backable', !!canBack);
+    hint.hidden = !(canPick || canBack);
+    hint.textContent = canPick ? '👆 タイルをクリックすると、その1件をモニタに大きく出せます' : canBack ? '👆 モニタのようすをクリックすると、タイルにもどります' : '';
+  }
+  applyPvSize();
+
   /* --- いまの状態と操作ボタン --- */
   function renderStatus() {
     const st = cur(), run = st.run;
@@ -2350,13 +2393,13 @@ function operatorView(code) {
         <p class="muted" style="font-size:.85rem;margin:10px 0 0">受付中でも、下の一覧から「🖥 モニタに出す」を押せます（そのときは受付を締め切ります）</p>`;
       else if (tilesOn) h += `<div class="ctl"><button class="primary big" id="cUp" ${(st.scroll || 0) <= 0 ? 'disabled' : ''}>▲ 上へ</button><button class="primary big" id="cDown">▼ 下へ</button><button id="cHide">表示を消す</button><button id="cWait">待機画面にもどす</button></div>
         <div class="toggles">${hqBtn(run)}</div>
-        <p class="muted" style="font-size:.85rem;margin:10px 0 0">表示用ウィンドウの上で、マウスホイールや ↑↓ キーでも動かせます。下の一覧の「🖥 モニタに出す」で1件だけ大きく出せます</p>`;
+        <p class="muted" style="font-size:.85rem;margin:10px 0 0">表示用ウィンドウの上で、マウスホイールや ↑↓ キーでも動かせます。<b>「モニタのようす」のタイルをクリック</b>するか、下の一覧の「🖥 モニタに出す」で1件だけ大きく出せます</p>`;
       else if (st.phase === 'result' && st.pick) h += `<div class="op-pick">${esc(st.pick.body)}${st.pick.name ? `<br><small>― ${esc(st.pick.name)} さん</small>` : ''}</div>
-        <div class="ctl"><button class="primary big" id="cNext">▶ 次の文章</button><button id="cTiles">🧱 ぜんぶタイルで出す</button><button id="cHide">表示を消す</button><button id="cWait">待機画面にもどす</button></div><div class="toggles">${hqBtn(run)}</div>`;
+        <div class="ctl">${st.tback ? '<button class="primary big" id="cBack">🧱 タイルにもどる</button>' : ''}<button class="${st.tback ? '' : 'primary big'}" id="cNext">▶ 次の文章</button>${st.tback ? '' : '<button id="cTiles">🧱 ぜんぶタイルで出す</button>'}<button id="cHide">表示を消す</button><button id="cWait">待機画面にもどす</button></div><div class="toggles">${hqBtn(run)}</div>`;
       else h += `<p class="muted" style="margin:.6em 0 0">下の「📮 とどいた文章」から、えらんで「🖥 モニタに出す」を押してね。</p><div class="ctl"><button class="primary" id="cTiles">🧱 ぜんぶタイルで出す</button><button class="primary" id="cNext">▶ 1件ずつ順番に出す</button><button id="cWait">待機画面にもどす</button></div><div class="toggles">${hqBtn(run)}</div>`;
       $('#status').innerHTML = h;
       const on = (id, f) => { const b = $('#' + id); if (b) b.onclick = f; };
-      on('cClose', closeNow); on('cWait', backToWait); on('cHide', hidePick); on('cNext', nextPick); on('cTiles', () => showTiles(cur().run));
+      on('cClose', closeNow); on('cWait', backToWait); on('cHide', hidePick); on('cNext', nextPick); on('cTiles', () => showTiles(cur().run)); on('cBack', backToTiles);
       on('cUp', () => scrollTiles(-1)); on('cDown', () => scrollTiles(1)); on('tHideQ', toggleHideQ);
       on('tCount', () => { const s = cur(); push({ ...s, run: { ...s.run, showCount: !s.run.showCount } }); });
       tickStatus(); return;
@@ -2375,11 +2418,11 @@ function operatorView(code) {
     } else if (st.phase === 'result') {
       h += `<div class="ctl"><button class="primary big" id="cWait">待機画面にもどす</button><button id="cAgain">同じ質問をもう一度</button></div><div class="toggles">${phoneBtn(run)}${hqBtn(run)}</div>`;
     } else {
-      h += `<p class="muted" style="margin:.6em 0 0">モニタには参加用のQRコードとカギの数字が出ています。左から質問を選んで出題してね。</p><div class="ctl"><button class="primary" id="cBz">🔴 早押しをはじめる</button></div>`;
+      h += `<p class="muted" style="margin:.6em 0 0">モニタには参加用のQRコードとカギの数字が出ています。左から質問を選んで出題してね。</p>`;
     }
     $('#status').innerHTML = h;
     const on = (id, f) => { const b = $('#' + id); if (b) b.onclick = f; };
-    on('cClose', closeNow); on('cWait', backToWait); on('cReveal', reveal); on('cAgain', again); on('cBz', startBuzz);
+    on('cClose', closeNow); on('cWait', backToWait); on('cReveal', reveal); on('cAgain', again);
     const nr = $('#cNoRoll'); if (nr) nr.onchange = e => store.set(NOROLL_KEY, e.target.checked);
     on('tPhone', () => { const s = cur(); push({ ...s, run: { ...s.run, phoneResult: !s.run.phoneResult } }); });
     on('tCount', () => { const s = cur(); push({ ...s, run: { ...s.run, showCount: !s.run.showCount } }); });
@@ -2532,11 +2575,12 @@ function operatorView(code) {
     else if (age > (st.phase === 'open' ? 2000 : 8000)) fetchTexts(run.id);
   }, 500);
   function markShown(eid) { shown.add(eid); store.set(shownKey, [...shown].slice(-2000)); }
-  async function pickText(run, t) {
+  async function pickText(run, t, fromTiles = false) {
     const st = cur();
     if (st.phase === 'open' && !confirm(st.run && st.run.id === run.id ? 'まだ受付中です。締め切って、この文章をモニタに出しますか？' : 'いま回答受付中のアンケートがあります。締め切って、この文章をモニタに出しますか？')) return;
     const pick = { eid: t.eid, body: t.body, name: runAnon(run, w.room.anon_mode) === 'named' && t.name ? t.name : null };
-    if (await push({ phase: 'result', run, pick, pk: uid(6) })) { markShown(t.eid); opresKey = ''; renderOpRes(); if (!$('#tabHist').hidden) renderHistory(); }
+    const tback = fromTiles && st.view === 'tiles' ? { scroll: st.scroll || 0, tk: st.tk } : (st.tback && st.pick ? st.tback : null);
+    if (await push({ phase: 'result', run, pick, pk: uid(6), ...(tback ? { tback } : {}) })) { markShown(t.eid); opresKey = ''; renderOpRes(); if (!$('#tabHist').hidden) renderHistory(); }
   }
   async function showTiles(run) {
     const st = cur();
@@ -2550,6 +2594,20 @@ function operatorView(code) {
     if (max != null && n > max) return toast('いちばん下です');
     push({ ...st, scroll: n });
   }
+  // 大きく出した1件から、タイルの一覧にもどる（スクロールの位置もそのまま）
+  function backToTiles() {
+    const st = cur(); if (!st.tback || !st.run) return;
+    push({ phase: 'result', run: st.run, view: 'tiles', tk: st.tback.tk || uid(6), scroll: st.tback.scroll || 0 });
+  }
+  // モニタのようす：タイルをクリック → その1件を大きく／大きく出ているときにクリック → タイルにもどる
+  $('#preview').addEventListener('click', e => {
+    const st = cur(), run = st.run; if (!isTextRun(run) || st.phase !== 'result') return;
+    if (st.view === 'tiles') {
+      const el = e.target.closest('.tt[data-eid]'); if (!el || !el.dataset.eid) return;
+      const t = tx.runId === run.id && tx.list.find(x => x.eid === el.dataset.eid);
+      if (t) pickText(run, t, true);
+    } else if (st.pick && st.tback) backToTiles();
+  });
   function hidePick() { const st = cur(); if (st.run) push({ phase: 'closed', run: st.run }); }
   function nextPick() {
     const st = cur(), run = st.run; if (!isTextRun(run)) return;
@@ -2570,7 +2628,7 @@ function operatorView(code) {
   setInterval(() => {
     const st = cur();
     if (st.phase === 'open' && st.ends_at && Clock.now() > st.ends_at + 400 && autoClosed !== st.run.id) { autoClosed = st.run.id; closeNow(); }
-    if (w.room) { renderStatus(); stage.update(); opDir.tick(); renderSfxInd(); }
+    if (w.room) { renderStatus(); stage.update(); opDir.tick(); renderSfxInd(); renderPvSide(); }
   }, 250);
 
   /* --- 履歴 --- */
