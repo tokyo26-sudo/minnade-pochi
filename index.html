@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5a36">
-<title>みんなでポチッ v0.14</title>
+<title>みんなでポチッ v0.14.2</title>
 <style>
 :root{
   --ink:#1d2433;--sub:#5b6478;--line:#e3e6ee;--bg:#f4f5f9;--card:#fff;
@@ -382,6 +382,7 @@ img[data-img]:not([src]){visibility:hidden}
 .bzbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;max-width:560px}
 .bzbtns button{min-height:72px;font-size:clamp(1.05rem,4.8vw,1.45rem)!important;font-weight:900;border-radius:14px;white-space:nowrap;padding:.4em .3em}
 .bzbtns .bz-q{grid-column:1/-1}
+.bzno{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}.bzno span{font-size:.9rem;color:var(--sub);font-weight:700}.bzno button{min-width:48px;min-height:44px;font-size:1.3rem;font-weight:900;padding:0 .6em}.bzno b{min-width:5.5em;text-align:center;font-size:1.15rem}.bz-judged{color:#1f9d55}
 .bz-q{background:#3e63dd!important;border-color:#3e63dd!important;color:#fff!important;font-size:1.3rem!important}
 .bz-ng{background:#e5484d!important;border-color:#e5484d!important;color:#fff!important;font-size:1.3rem!important}
 .bzlist{display:grid;gap:6px}
@@ -757,7 +758,7 @@ const SFX = (() => {
     if (!enabled()) { stopLoop(); Object.keys(shots).forEach(stop); }
   }
   function setCfg(c) {
-    const n = { on: !c || c.on !== false, vol: clamp(c && c.vol, 0, 1, 0.8), per: c && c.per && typeof c.per === 'object' ? c.per : {}, showPin: !c || c.showPin !== false };
+    const n = { on: !c || c.on !== false, vol: clamp(c && c.vol, 0, 1, 0.8), per: c && c.per && typeof c.per === 'object' ? c.per : {}, showPin: !c || c.showPin !== false, bzNo: !c || c.bzNo !== false };
     if (JSON.stringify(n) === JSON.stringify(CFG)) return; CFG = n; refresh();
   }
   const duration = (name, d) => bufs[name] ? bufs[name].duration : d;
@@ -831,9 +832,9 @@ const HELP_MASTER = `<div class="help">
     <li>押した順に、モニタに上位5人の名前が出ます（2位からは1位との差の秒数も）。操作画面には全員の順番が出ます</li>
     <li>だれかが押すたびに、早押しボタンの音が鳴ります（鳴っているあいだに押された分は鳴らしません）</li>
     <li>順番は、サーバーに届いた順で決まります。1つの問題で数えるのは、1人1回目だけです</li>
-    <li>「↺ リセット（次の問題へ）」で次の問題に。「🎵 デデン！（出題）」「⭕ ピンポン」「❌ ブー」で音を鳴らせます。音量はその下のつまみで</li>
+    <li>「🎵 デデン！（次の問題）」で、押した人を消してデデン！の音。第◯問が1つ進むのは、<b>「⭕ ピンポン」か「❌ ブー」を鳴らしたあと</b>のデデン！だけ（さいしょの1回は第1問）</li><li>ピンポンもブーも鳴らしていないのにデデン！→ だれか押していたら「押した人を消して、やりなおしますか？」と聞きます（番号はそのまま）。だれも押していなければ音だけ</li><li>だれも押さなかった（スルー）ときは、ブーを鳴らしてからデデン！か、「第◯問を直す」の ＋ で</li><li>「第◯問を直す」の −／＋ で番号を手で直せます。「↺ リセット」は押した人を消すだけ（番号はそのまま）。⚙️ 設定で、第◯問をモニタ・スマホに出さないようにもできます</li>
     <li>パワポなどをモニタに映しながら、スマホだけで早押しを進めることもできます（表示用ウィンドウは閉じていてOK。音はスマホから鳴ります）</li>
-    <li>本番の前に「ためしに押してみて〜」とボタンを押してもらい、リセットするとスイッチチェックになります</li>
+    <li>早押しをはじめたときは問題番号なし＝スイッチチェック。「ためしに押してみて〜」→ デデン！で第1問へ（スイッチチェックの記録は「スイッチチェック」として残ります）</li>
     <li>早押しの記録は「📜 履歴」と記録ファイルにも残ります</li>
   </ul>
   <h3>❓ 質問文をかくす（答えから質問を当てるゲームなど）</h3>
@@ -1129,7 +1130,7 @@ function landingView(prefill) {
   $('#app').innerHTML = `<div class="land">
     <button class="helpbtn" id="lHelp">📖 使い方</button>
     <div class="logo">みんなで<span>ポチッ</span></div>
-    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14</small></p>
+    <p class="lead">会場のみんなが、手元のスマホで参加できるアンケート・早押し <small>v0.14.2</small></p>
     ${DEMO ? `<div class="demo-banner"><b>おためしモード</b>で動いています。サーバーなしで、このブラウザの中だけで動きます（同じブラウザのタブ同士で試せます）。本番で使うときは README の手順で Supabase につないでください。</div>` : ''}
     <div class="card">
       <h3>📣 マスター：部屋をつくる</h3>
@@ -1340,7 +1341,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     const top = list.slice(0, 5), first = top.length ? top[0].ms : 0;
     const body = top.length ? `<div class="bz-wrap">${top.map((x, i) => `<div class="bz-row r${i} ${i >= seen ? 'anim' : ''}"><span class="bz-rank">${MEDAL[i] || (i + 1)}</span><span class="bz-name">${esc(x.name)}</span><span class="bz-diff">${i ? `+${((x.ms - first) / 1000).toFixed(2)}秒` : ''}</span></div>`).join('')}</div>`
       : `<div class="bz-empty"><b>🔴</b><span>わかったら、スマホのボタンを押してね！</span></div>`;
-    return `<div class="st"><div class="bz-head">🔴 早押し<small>第${Number(bz.n) || 1}問</small></div>${body}
+    return `<div class="st"><div class="bz-head">🔴 早押し${Number(bz.n) > 0 && !bz.hideNo ? `<small>第${Number(bz.n)}問</small>` : ''}</div>${body}
       <div class="st-foot"><span>🙋 押した人 <b>${list.length}</b>人</span><span class="st-mode">📢 早押しは名前が出ます</span></div></div>`;
   }
   // カギの数字：オフのときは「会場でお伝えします」（オンライン配信の人に入られないように）
@@ -1458,7 +1459,7 @@ function makeStage(el, getW, joinUrl, getHold, opts = {}) {
     }
     const st = w.room.state || { phase: 'waiting' }, run = st.run, screen = screenOf(st);
     let lk = '';
-    if (screen === 'buzz') { const l = opts.getBuzz ? opts.getBuzz(st.buzz.round) : []; lk = st.buzz.round + ':' + st.buzz.n + ':' + l.length + ':' + l.slice(0, 5).map(x => x.name + x.ms).join(','); }
+    if (screen === 'buzz') { const l = opts.getBuzz ? opts.getBuzz(st.buzz.round) : []; lk = st.buzz.round + ':' + st.buzz.n + ':' + !!st.buzz.hideNo + ':' + l.length + ':' + l.slice(0, 5).map(x => x.name + x.ms).join(','); }
     if (screen === 'tiles') { const l = opts.getTexts ? opts.getTexts(run) : null; lk = l ? l.length + ':' + l.map(t => t.eid + (t.edited ? '*' : '')).join(',').length + ':' + (l.length ? l[l.length - 1].eid : '') : 'none'; }
     const k = [screen, run && run.id, run && run.reveal, run && run.showCount, run && run.hideQ, run && run.anon, st.pk, st.tk, lk, w.room.pin, pinShown(w.room), w.room.title, qrReady, el.clientWidth > 0].join('|');
     if (k !== key) {
@@ -1731,12 +1732,12 @@ function participantView(code) {
   let myBz = S.get(bzKey, {}), bzBusy = false;
   const RANK_TXT = r => r === 1 ? '🥇 1位！' : r === 2 ? '🥈 2位' : r === 3 ? '🥉 3位' : `${r}位`;
   function renderBuzz(bz) {
-    const k = ['buzz', bz.round, bz.n, pub.title, joined.name].join('|');
+    const k = ['buzz', bz.round, bz.n, bz.hideNo, pub.title, joined.name].join('|');
     if (k !== key) {
       key = k;
       app.innerHTML = `<div class="p-wrap">${head(false)}<div class="p-main p-center bz-main">
         <div class="p-badge named">📢 早押しは名前がモニタに出ます</div>
-        <div class="bz-me">👤 ${esc(joined.name)}</div><div class="bz-no">🔴 早押し　第${Number(bz.n) || 1}問</div>
+        <div class="bz-me">👤 ${esc(joined.name)}</div><div class="bz-no">🔴 早押し${Number(bz.n) > 0 && !bz.hideNo ? `　第${Number(bz.n)}問` : ''}</div>
         <button class="bz-btn" id="bzBtn" type="button"></button>
         <div class="bz-res" id="bzRes"></div></div></div>`;
       const btn = $('#bzBtn');
@@ -1756,11 +1757,31 @@ function participantView(code) {
     else if (bzBusy) { btn.innerHTML = '✅'; res.textContent = '押した！'; }
     else { btn.innerHTML = 'おす！'; res.textContent = 'わかったら押してね'; }
   }
-  async function press(round) {
-    if (myBz.round === round || bzBusy) return;
-    const btn = $('#bzBtn'); if (btn) btn.classList.add('down');
-    haptic(); bzBusy = true; paintBuzz(round);
-    const res = await API.buzz(code, device, round);
+  let bzPeekAt = 0;
+  // もう押したボタンをまた押した → 新しい問題（デデン！）がまだとどいていないだけかも。たしかめて、新しければそっちで押す
+  async function peekNewRound(round) {
+    if (Date.now() - bzPeekAt < 1000) return; bzPeekAt = Date.now();
+    const ps = await API.publicState(code);
+    const nb = ps.ok && ps.state && ps.state.phase === 'buzz' && ps.state.buzz ? ps.state.buzz : null;
+    if (nb && nb.round !== round && myBz.round !== nb.round && !bzBusy) { pub = ps; key = ''; render(); press(nb.round, true); }
+  }
+  async function press(round, retry = false) {
+    if (myBz.round === round && !bzBusy) return peekNewRound(round);
+    if (myBz.round === round || (bzBusy && !retry)) return;
+    const btn = $('#bzBtn'); if (btn && !retry) btn.classList.add('down');
+    const t0 = Date.now();
+    if (!retry) haptic();
+    bzBusy = true; paintBuzz(round);
+    let res = await API.buzz(code, device, round);
+    // デデン！の直後は、スマホに新しい問題がとどく前に押してしまうことがある → 新しい問題で押しなおす
+    if (!res.ok && res.error === 'closed' && !retry && Date.now() - t0 < 3000) {
+      const ps = await API.publicState(code);
+      const nb = ps.ok && ps.state && ps.state.phase === 'buzz' && ps.state.buzz ? ps.state.buzz : null;
+      if (nb && nb.round !== round && myBz.round !== nb.round) {
+        pub = ps; key = ''; render(); bzBusy = false;
+        return press(nb.round, true);
+      }
+    }
     bzBusy = false;
     if (res.ok) { myBz = { round, rank: res.rank, diff: res.diff || 0 }; S.set(bzKey, myBz); API.pingBuzz(code); }
     else {
@@ -1935,13 +1956,13 @@ function recordCsv(rec) {
     : x.options.forEach((o, i) => rows.push([k + 1, x.question, x.started_at ? fmtTime(x.started_at) : '', o, x.counts[i] || 0,
     x.total ? Math.round((x.counts[i] || 0) * 1000 / x.total) / 10 : 0, x.total].concat(withNames ? [(x.names && x.names[i] || []).join('、')] : []))));
   (rec.buzz || []).forEach(g => { const f = g.presses.length ? g.presses[0].ms : 0;
-    g.presses.forEach((x, i) => rows.push([`早押し${g.n || ''}`, '（早押し）', g.started ? fmtTime(g.started) : '', `${i + 1}位${i ? `（+${((x.ms - f) / 1000).toFixed(2)}秒）` : ''}`, '', '', g.presses.length, x.name])); });
+    g.presses.forEach((x, i) => rows.push([(g.n ? `早押し${g.n}` : '早押し（スイッチチェック）'), '（早押し）', g.started ? fmtTime(g.started) : '', `${i + 1}位${i ? `（+${((x.ms - f) / 1000).toFixed(2)}秒）` : ''}`, '', '', g.presses.length, x.name])); });
   return '\uFEFF' + rows.map(rw => rw.map(cell).join(',')).join('\r\n');
 }
 function buzzHtml(rec) {
   const gs = rec.buzz || []; if (!gs.length) return '';
   return `<div class="card"><h3>🔴 早押しの記録 <small>（${gs.length}問）</small></h3>${gs.map(g => { const f = g.presses.length ? g.presses[0].ms : 0;
-    return `<div class="hrun"><div class="hrun-q"><small>第${g.n || '?'}問</small>${g.started ? fmtTime(g.started) : ''}　<small>押した人 ${g.presses.length}人</small></div>
+    return `<div class="hrun"><div class="hrun-q"><small>${g.n ? `第${g.n}問` : 'スイッチチェック'}</small>${g.started ? fmtTime(g.started) : ''}　<small>押した人 ${g.presses.length}人</small></div>
       <div class="chips" style="margin-top:6px">${g.presses.slice(0, 10).map((x, i) => `<span class="chip">${['🥇', '🥈', '🥉'][i] || (i + 1) + '位'} ${esc(x.name)}${i ? ` +${((x.ms - f) / 1000).toFixed(2)}秒` : ''}</span>`).join('')}${g.presses.length > 10 ? `<span class="chip">ほか${g.presses.length - 10}人</span>` : ''}</div></div>`; }).join('')}</div>`;
 }
 const fileStamp = () => { const d = new Date(); return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`; };
@@ -2297,15 +2318,19 @@ function operatorView(code) {
     if (st.phase === 'buzz' && st.buzz) {
       const k = 'bz|' + st.rev; if (k === statusKey) return; statusKey = k;
       const vol = SFX.volume();
-      $('#status').innerHTML = `<div class="phase open"><span class="dot"></span>🔴 早押し中　第${Number(st.buzz.n) || 1}問</div>
-        <div class="ctl"><button class="primary big" id="bzReset">↺ リセット（次の問題へ）</button></div>
-        <div class="bzbtns"><button class="bz-q" id="bzQ">🎵 デデン！（出題）</button><button class="bz-ok" id="bzOk">⭕ ピンポン</button><button class="bz-ng" id="bzNg">❌ ブー</button></div>
+      const bn = Number(st.buzz.n) || 0;
+      $('#status').innerHTML = `<div class="phase open"><span class="dot"></span>🔴 早押し中　${bn > 0 ? `第${bn}問` : '<small>（スイッチチェック中・問題はまだ）</small>'}</div>
+        <div class="bzbtns"><button class="bz-q" id="bzQ">🎵 デデン！（次の問題）</button><button class="bz-ok" id="bzOk">⭕ ピンポン</button><button class="bz-ng" id="bzNg">❌ ブー</button></div>
+        <p class="muted" style="font-size:.82rem;margin:6px 0 0">🎵 デデン！で次の問題（押した人が消えます）。第◯問が進むのは、<b>⭕ ピンポンか ❌ ブーを鳴らしたあと</b>のデデン！だけ（さいしょの1回は第1問）${st.buzz.judged ? '　<b class="bz-judged">→ 次のデデン！で第' + (bn + 1) + '問</b>' : ''}</p>
+        <div class="bzno"><span>第◯問を直す</span><button id="bzNoM" ${bn <= 0 ? 'disabled' : ''}>−</button><b>${bn > 0 ? `第${bn}問` : '―'}</b><button id="bzNoP">＋</button>${st.buzz.hideNo ? '<small class="muted">（モニタ・スマホには出していません：⚙️ 設定）</small>' : ''}</div>
+        <div class="ctl"><button id="bzReset">↺ リセット（押した人を消すだけ）</button></div>
         <div class="vol" style="margin:12px 0 0">🔉 音量 <input type="range" id="bzVol" min="0" max="100" value="${Math.round(vol * 100)}"><span id="bzVolV">${Math.round(vol * 100)}</span></div>
         <p class="muted" style="font-size:.82rem;margin:6px 0 0">効果音は、表示用ウィンドウがあればそっちから、なければ<b>さいごにさわった操作画面</b>から鳴ります（いまどこで鳴るかは、いちばん上に出ています。音ごとの大きさは ⚙️ 設定で）</p>
         <div class="ctl"><button id="bzEnd">早押しを終わる（待機画面へ）</button></div>`;
       $('#bzReset').onclick = resetBuzz; $('#bzEnd').onclick = backToWait;
-      $('#bzQ').onclick = () => sfx('shutsudai');
-      $('#bzOk').onclick = () => sfx('seikai'); $('#bzNg').onclick = () => sfx('fuseikai');
+      $('#bzQ').onclick = dedenBuzz;
+      $('#bzNoM').onclick = () => bumpBuzzNo(-1); $('#bzNoP').onclick = () => bumpBuzzNo(1);
+      $('#bzOk').onclick = () => judgeBuzz('seikai'); $('#bzNg').onclick = () => judgeBuzz('fuseikai');
       $('#bzVol').oninput = e => { setRoomCfg({ ...SFX.cfg(), vol: +e.target.value / 100 }); $('#bzVolV').textContent = e.target.value; };
       return;
     }
@@ -2445,14 +2470,49 @@ function operatorView(code) {
     const st = cur();
     if (st.phase === 'open' && !confirm('いま回答受付中のアンケートがあります。締め切って早押しにしますか？')) return;
     SFX.preload();
-    const n = (Number(store.get(BZ_N_KEY, 0)) || 0) + 1;
-    if (await push({ phase: 'buzz', buzz: { round: 'b' + uid(10), n } })) store.set(BZ_N_KEY, n);
+    // はじめたときは問題番号を出さない（スイッチチェック）。番号は「デデン！」で進む
+    const last = Number(store.get(BZ_N_KEY, 0)) || 0;
+    await push({ phase: 'buzz', buzz: { round: 'b' + uid(10), n: 0, last, hideNo: SFX.cfg().bzNo === false } });
   }
+  const bzLast = bz => Math.max(Number(bz.last) || 0, Number(bz.n) || 0, Number(store.get(BZ_N_KEY, 0)) || 0);
+  const bzHide = () => SFX.cfg().bzNo === false;
+  // ↺ リセット：押した人を消すだけ（第◯問も、ピンポン・ブーを鳴らしたかどうかもそのまま）
   async function resetBuzz() {
     const st = cur(); if (st.phase !== 'buzz') return;
-    const n = (Number(st.buzz.n) || 0) + 1;
-    if (await push({ phase: 'buzz', buzz: { round: 'b' + uid(10), n } })) store.set(BZ_N_KEY, n);
+    await push({ phase: 'buzz', buzz: { ...st.buzz, round: 'b' + uid(10), last: bzLast(st.buzz), hideNo: bzHide() } });
   }
+  // ⭕ ピンポン・❌ ブー：音＋「この問題は答え合わせをした」しるし（次のデデン！で第◯問が進む）
+  async function judgeBuzz(name) {
+    const st = cur(); sfx(name);
+    if (st.phase === 'buzz' && st.buzz && !st.buzz.judged) await push({ phase: 'buzz', buzz: { ...st.buzz, judged: true } });
+  }
+  // 🎵 デデン！
+  //   さいしょの1回、またはピンポン・ブーのあと → 押した人を消して第◯問を1つ進める
+  //   それ以外 → だれか押していたら確認して押した人を消す（番号はそのまま）。だれも押していなければ音だけ
+  let dedenBusy = false;
+  async function dedenBuzz() {
+    const st = cur(); if (st.phase !== 'buzz' || dedenBusy) return;
+    const bz = st.buzz, bn = Number(bz.n) || 0, pressed = bf.get(bz.round).length;
+    let next;
+    if (bn <= 0 || bz.judged) { const n = bzLast(bz) + 1; next = { n, last: n }; }
+    else if (pressed) {
+      if (!confirm(`まだ ⭕ ピンポンも ❌ ブーも鳴らしていません。\n押した人（${pressed}人）を消して、第${bn}問をやりなおしますか？`)) return;
+      next = { n: bn, last: bzLast(bz) };
+    } else return sfx('shutsudai');
+    dedenBusy = true;
+    const ok = await push({ phase: 'buzz', buzz: { round: 'b' + uid(10), ...next, hideNo: bzHide() } });
+    dedenBusy = false;
+    if (ok) { store.set(BZ_N_KEY, next.last); sfx('shutsudai'); }
+  }
+  // 第◯問を手で直す（押した人は消えない）
+  async function bumpBuzzNo(d) {
+    const st = cur(); if (st.phase !== 'buzz') return;
+    const bz = st.buzz, cn = Number(bz.n) || 0;
+    const n = d > 0 ? (cn > 0 ? cn : bzLast(bz)) + 1 : Math.max(0, cn - 1);
+    if (await push({ phase: 'buzz', buzz: { ...bz, n, last: n > 0 ? n : bzLast(bz) } })) store.set(BZ_N_KEY, n > 0 ? n : bzLast(bz));
+  }
+  // 設定で「第◯問を出す」を変えたとき、早押し中ならすぐ反映
+  async function applyBzHide() { const st = cur(); if (st.phase === 'buzz' && st.buzz && !!st.buzz.hideNo !== bzHide()) await push({ phase: 'buzz', buzz: { ...st.buzz, hideNo: bzHide() } }); }
   $('#bzStart').onclick = startBuzz;
   /* --- 自由に書く：とどいた文章をモニタに出す --- */
   async function fetchTexts(runId) {
@@ -2542,6 +2602,9 @@ function operatorView(code) {
       <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">進行タブにダミー参加者の箱が出ます。本番のときはオフに。</p>
       <label class="chk"><input type="checkbox" id="sBk" ${backupOn() ? 'checked' : ''}> 💾 このPCのブラウザに結果の控えを自動で残す</label>
       <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">保存し忘れても、トップの「このPCに残っている控え」から見られます。共用PCではオフに。</p>
+      <h3 class="set-h">🔴 早押し <small class="muted">（この部屋の設定）</small></h3>
+      <label class="chk"><input type="checkbox" id="sBzNo" ${cf.bzNo !== false ? 'checked' : ''}> 第◯問をモニタ・参加者のスマホに出す</label>
+      <p class="muted" style="font-size:.82rem;margin:-6px 0 14px 28px">オフにしても、操作画面にはいつも出ます。</p>
       <h3 class="set-h">🔊 効果音 <small class="muted">（この部屋の設定。表示用ウィンドウ・PC・スマホで共通）</small></h3>
       <p class="muted" style="font-size:.82rem;margin:0 0 10px">音は、表示用ウィンドウがあればそっちから、なければ<b>さいごにさわった操作画面</b>（PC・スマホ）から鳴ります。</p>
       <label class="chk"><input type="checkbox" id="sSfx" ${cf.on !== false ? 'checked' : ''}> 効果音を鳴らす</label>
@@ -2558,6 +2621,7 @@ function operatorView(code) {
       <div class="row" style="justify-content:flex-end"><button class="primary" data-close>閉じる</button></div>`);
     $('#sDummy', m).onchange = e => { store.set(DUMMY_KEY, e.target.checked); applyDummy(); };
     $('#sBk', m).onchange = e => setBackup(e.target.checked);
+    $('#sBzNo', m).onchange = e => { setRoomCfg({ ...SFX.cfg(), bzNo: e.target.checked }); applyBzHide(); };
     $('#sSfx', m).onchange = e => setRoomCfg({ ...SFX.cfg(), on: e.target.checked });
     $('#sVol', m).oninput = e => { setRoomCfg({ ...SFX.cfg(), vol: +e.target.value / 100 }); $('#sVolV', m).textContent = e.target.value; };
     $('#sTest', m).onclick = () => sfx('shutsudai');
